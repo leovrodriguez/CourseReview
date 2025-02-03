@@ -1,0 +1,7 @@
+services:
+  semantic_analyis:
+    build:
+      context: .
+      dockerfile: semantic_analysis/Dockerfile
+    volumes:
+      - .:/job
