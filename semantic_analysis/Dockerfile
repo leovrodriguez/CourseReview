@@ -1,7 +1,11 @@
 FROM python:3.11
 
-WORKDIR /job/semantic_analysis
+WORKDIR /job
 
-COPY . /job
+COPY . .
 
-CMD ["python", "main.py"]
+RUN pip install --no-cache-dir -r semantic_analysis/requirements.txt
+
+RUN mypy .
+
+CMD ["python", "semantic_analysis/main.py"]
