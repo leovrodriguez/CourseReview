@@ -1,3 +1,5 @@
 mypy
 requests
 types-requests
+ollama
+chromadb
