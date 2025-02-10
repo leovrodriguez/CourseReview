@@ -20,7 +20,7 @@ def normalized_courses() -> List[Course]:
                 raw_data = json.load(file)
                 courses.extend(parse_coursera_courses(raw_data, CourseWebsite.COURSERA))
 
-    print(f"Found {len(courses)} total courses")
+    print(f"Normalized {len(courses)} total courses from raw json format")
     return courses
 
 #TODO: Add udemy course logic 

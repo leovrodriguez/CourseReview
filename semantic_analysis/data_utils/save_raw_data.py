@@ -3,6 +3,7 @@ import json
 import os
 from time import sleep
 from .course import COURSERA_DIR
+from env import FORCE_PARSE
 
 url = "https://www.coursera.org/graphql-gateway?opname=Search"
 session = requests.Session()
@@ -12,6 +13,11 @@ def write_raw_data():
     # save_udemy_raw_data
 
 def save_coursera_raw_data():
+
+  if os.path.exists(os.path.join(COURSERA_DIR, 'all_entries.json')) or FORCE_PARSE:
+     print("Not parsing raw data. Raw data persisted in docker volume. To force a restart run: FORCE_PARSE=true docker-compose up ")
+     return
+
   payload = json.dumps([
     {
       "operationName": "Search",
@@ -47,4 +53,5 @@ def save_coursera_raw_data():
     os.makedirs(COURSERA_DIR, exist_ok=True)
     with open(os.path.join(COURSERA_DIR, 'all_entries.json'), 'w') as file:
         file.write(response.text)
+        print(f"Wrote raw data to {COURSERA_DIR}/all_entries.json")
     break

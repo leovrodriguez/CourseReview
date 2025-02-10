@@ -3,19 +3,21 @@ from data_utils.course import Course
 from data_utils.clean_scraped_courses import normalized_courses
 from typing import List
 from course_embedder.embedder import embed_course_vectors, embed_query
-import chromadb
+from database.db_factory import get_vector_db
+from env import FORCE_EMBED
 
 if __name__ == "__main__":
     
-    #Stores raw in respective path e.g data/{course_website}/
-    write_raw_data()
-    print("Finished writing raw data")
+    write_raw_data() 
     courses: List[Course] = normalized_courses()
-    print(f"Finished normalizing {len(courses)} courses")
-    embedded_course_vectors: List[List[float]] = embed_course_vectors(courses)
-    print(f"Finished embedding {len(embedded_course_vectors)} courses")
 
-    # Test some queries
+    vector_db = get_vector_db()
+    if FORCE_EMBED: 
+        print("Forcing re-embedding of courses")
+        vector_db.clear()
+        embedded_course_vectors: List[List[float]] = embed_course_vectors(courses[:10])
+        for i, course_vector in enumerate(embedded_course_vectors):
+            vector_db.insert_vector(i, course_vector)
     queries = [
         "Python programming",
         "data science",
@@ -35,24 +37,14 @@ if __name__ == "__main__":
     ]
     embedded_queries = [embed_query(query) for query in queries]
 
-    #  Using chromadb as a placeholder for vector storage and retrieval
-    client = chromadb.Client()
-    collection = client.get_or_create_collection(name = "courses")
-
-    # Store the course indexes in the collection
-    for i, course_vector in enumerate(embedded_course_vectors):
-        collection.add(ids=[str(i)], embeddings=course_vector,documents=[str(i)])
-
-    # Run query and print course result
     for query, query_vector in zip(queries, embedded_queries):
-        result = collection.query(query_embeddings=query_vector, n_results=1)
-        documents = result.get('documents', [[]])
-        if documents == None:
+        results = vector_db.query_vector(query_vector)
+        if not results:
             print(f"Query: {query}")
-            print("No similar courses found.\n")        
+            print("No similar courses found.\n")
         else:
-            course_index = int(documents[0][0])
-            most_similar_course = courses[course_index]
+            most_similar_courses = [courses[result[0]] for result in results]
             print(f"Query: {query}")
-            print(f"Most similar course: {most_similar_course}\n")
-      
+            print(f"Top 3 similar course: {most_similar_courses}\n")
+
+    vector_db.close()

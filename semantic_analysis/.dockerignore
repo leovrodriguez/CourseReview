@@ -1,0 +1,2 @@
+# Don't upload scraped data
+semantic_analysis/data/*

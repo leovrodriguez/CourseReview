@@ -2,4 +2,4 @@ mypy
 requests
 types-requests
 ollama
-chromadb
+sqlite-vec==0.1.7-alpha.2

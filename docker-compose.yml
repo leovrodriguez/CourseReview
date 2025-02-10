@@ -1,7 +1,15 @@
 services:
-  semantic_analyis:
+  semantic_analysis:
     build:
       context: .
       dockerfile: semantic_analysis/Dockerfile
     volumes:
-      - .:/job
+      - raw_course_data:/job/semantic_analysis/data
+    environment:
+      - FORCE_PARSE=${FORCE_PARSE:-false}
+      - FORCE_EMBED=${FORCE_EMBED:-false}
+      - DB_IMPLEMENTATION=${DB_IMPLEMENTATION:-sqlite}
+      - DB_PATH=${DB_PATH:-/job/semantic_analysis/data/semantic_analysis.db}
+
+volumes:
+  raw_course_data:
