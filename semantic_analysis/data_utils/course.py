@@ -9,6 +9,9 @@ class CourseWebsite(Enum):
     COURSERA = 1
     UDEMY =2
 
+"""
+Course dataclass defines the structure of a course object
+"""
 @dataclass
 class Course:
     original_website: CourseWebsite

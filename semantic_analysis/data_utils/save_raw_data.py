@@ -5,16 +5,24 @@ from time import sleep
 from .course import COURSERA_DIR
 from env import FORCE_PARSE
 
-url = "https://www.coursera.org/graphql-gateway?opname=Search"
-session = requests.Session()
-session.get("https://www.coursera.org")
+"""
+Core logic for web scraping. Makes requests to exposed apis and saves raw data to a file.
+"""
+
 def write_raw_data():
+    """
+  Saves all raw data to a file in the data directory into a respective sub directory (e.g data/coursera/)
+    """
     save_coursera_raw_data()
-    # save_udemy_raw_data
+    #TODO: save_udemy_raw_data
 
 def save_coursera_raw_data():
+  """
+  Saves raw data from coursera to a file in the data directory: data/coursera/all_entries.json
 
-  if os.path.exists(os.path.join(COURSERA_DIR, 'all_entries.json')) or FORCE_PARSE:
+  NOTE: Coursera web scraping allows us to grab 10000 courses so we only need to make one request to get all courses. Other platforms can vary.
+  """
+  if FORCE_PARSE:
      print("Not parsing raw data. Raw data persisted in docker volume. To force a restart run: FORCE_PARSE=true docker-compose up ")
      return
 
@@ -40,6 +48,10 @@ def save_coursera_raw_data():
     'Content-Type': 'application/json'
   }
 
+  url = "https://www.coursera.org/graphql-gateway?opname=Search"
+  session = requests.Session()
+  session.get("https://www.coursera.org")
+
   #Given long request time, requests can fail due to timeout. Increase attempt count if issues continue
   for attempt in range(10):
     response = session.post(url, headers=headers, data=payload, timeout=100)
@@ -48,7 +60,6 @@ def save_coursera_raw_data():
         print(f"Attempt {attempt + 1} to save raw data failed")
         continue
     
-    # print successful response
     print(f"Attempt {attempt + 1} to save raw data successful")
     os.makedirs(COURSERA_DIR, exist_ok=True)
     with open(os.path.join(COURSERA_DIR, 'all_entries.json'), 'w') as file:

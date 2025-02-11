@@ -6,10 +6,17 @@ import json
 import os
 
 """
-Return a list of normalized courses from raw scraped data
+Core normalization logic for scraped courses
+
+Here is where we will parse the raw scraped data into a list of Course objects
 """
+
 def normalized_courses() -> List[Course]:
-    
+    """
+    Return a list of normalized courses from raw scraped data stored in data/ directory
+
+    """
+
     courses: List[Course] = []
 
     for filename in os.listdir(COURSERA_DIR):
@@ -26,6 +33,9 @@ def normalized_courses() -> List[Course]:
 #TODO: Add udemy course logic 
 
 def parse_coursera_courses(raw_data, course_website: CourseWebsite) -> List[Course]:
+    """
+    Parse raw coursera data into a list of Course objects
+    """
     courses: List[Course] = []
     elements = raw_data[0].get("data", {}).get("SearchResult", {}).get("search", [])[0].get("elements", [])
     if (len(elements) == 0): 
