@@ -10,11 +10,11 @@ Core logic for web scraping. Makes requests to exposed apis and saves raw data t
 """
 
 def write_raw_data():
-    """
+  """
   Saves all raw data to a file in the data directory into a respective sub directory (e.g data/coursera/)
-    """
-    save_coursera_raw_data()
-    #TODO: save_udemy_raw_data
+  """
+  save_coursera_raw_data()
+  #TODO: save_udemy_raw_data
 
 def save_coursera_raw_data():
   """

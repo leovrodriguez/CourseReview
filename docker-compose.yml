@@ -10,6 +10,18 @@ services:
       - FORCE_EMBED=${FORCE_EMBED:-false}
       - DB_IMPLEMENTATION=${DB_IMPLEMENTATION:-sqlite}
       - DB_PATH=${DB_PATH:-/job/semantic_analysis/data/semantic_analysis.db}
+    depends_on:
+      - ollama
+
+  ollama:
+      image: ollama/ollama
+      container_name: ollama
+      volumes:
+        - ollama:/root/.ollama
+      command: serve
+      expose:
+        - 11434
 
 volumes:
   raw_course_data:
+  ollama:

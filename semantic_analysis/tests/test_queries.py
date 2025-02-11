@@ -1,18 +1,11 @@
 from data_utils.course import Course
 from typing import List
-from course_embedder.embedder import embed_course_vectors, embed_query
-from database import VectorDB
+from course_embedder.embedder import embed_course_vectors, get_embedding
+from database.vector_db import VectorDB
 from env import FORCE_EMBED
 
 
-def test_simple_queries(courses: List[Course], vector_db: VectorDB):
-    if FORCE_EMBED: 
-        print("Forcing re-embedding of courses")
-        vector_db.clear()
-        embedded_course_vectors: List[List[float]] = embed_course_vectors(courses[:10])
-        for i, course_vector in enumerate(embedded_course_vectors):
-            vector_db.insert_vector(i, course_vector)
-    queries = [
+example_queries = [
         "Python programming",
         "data science",
         "machine learning",
@@ -29,16 +22,30 @@ def test_simple_queries(courses: List[Course], vector_db: VectorDB):
         "natural language processing",
         "DevOps practices"
     ]
-    embedded_queries = [embed_query(query) for query in queries]
 
+
+def test_queries(courses: List[Course], vector_db: VectorDB, queries: List[str] = example_queries):
+    
+    # Embed courses and store them in vector_db
+    if FORCE_EMBED: 
+        print("Forcing re-embedding of courses in data directory")
+        vector_db.clear()
+        embedded_course_vectors: List[List[float]] = embed_course_vectors(courses)
+        for i, course_vector in enumerate(embedded_course_vectors):
+            vector_db.insert_vector(i, course_vector)
+    
+    # Embed queries and query vector_db
+    embedded_queries = [get_embedding(query) for query in queries]
     for query, query_vector in zip(queries, embedded_queries):
         results = vector_db.query_vector(query_vector)
         if not results:
             print(f"Query: {query}")
             print("No similar courses found.\n")
         else:
-            most_similar_courses = [courses[result[0]] for result in results]
             print(f"Query: {query}")
-            print(f"Top 3 similar course: {most_similar_courses}\n")
+            print(f"Top 3 similar courses: \n")
+            for course in [courses[result[0]] for result in results]: 
+                print(f"{course}\n")
+            print("\n")
 
     vector_db.close()

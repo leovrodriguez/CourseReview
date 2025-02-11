@@ -2,18 +2,20 @@ from enum import Enum
 from typing import List, Optional
 from dataclasses import dataclass
 import os
-"""
-CourseWebsite enum defines the platforms that we are retrieving data from
-"""
+
 class CourseWebsite(Enum):
+    """
+    CourseWebsite enum defines the platforms that we are retrieving data from
+    """
     COURSERA = 1
     UDEMY =2
 
-"""
-Course dataclass defines the structure of a course object
-"""
+
 @dataclass
 class Course:
+    """
+    Course dataclass defines the structure of a course object
+    """
     original_website: CourseWebsite
     name: str
     authors: List[str]
