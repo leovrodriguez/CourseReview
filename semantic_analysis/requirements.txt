@@ -1,0 +1,5 @@
+mypy
+requests
+types-requests
+ollama
+sqlite-vec==0.1.7-alpha.2

@@ -1,0 +1,23 @@
+# Ignore Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore virtual environments & environment variables
+venv/
+.env
+
+# Ignore Docker logs & overrides
+*.log
+docker-compose.override.yml
+
+# Ignore VS Code settings
+.vscode/
+*.swp
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Don't upload scraped data
+semantic_analysis/data/*/*
