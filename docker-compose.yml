@@ -19,8 +19,10 @@ services:
       volumes:
         - ollama:/root/.ollama
       command: serve
-      expose:
-        - 11434
+      # expose:
+      #  - 11434
+      ports:
+        - "11434:11434"
 
 volumes:
   raw_course_data:
