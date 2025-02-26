@@ -2,7 +2,10 @@ import requests
 import json
 import os
 from time import sleep
-from .course import COURSERA_DIR
+# from .course import COURSERA_DIR
+import sys
+sys.path.append('/job/semantic_analysis')
+from data_utils.course import COURSERA_DIR
 from env import FORCE_PARSE
 
 """
@@ -33,7 +36,8 @@ def save_coursera_raw_data():
         "requests": [
           {
             "entityType": "PRODUCTS",
-            "limit": 10000,
+            # Changed limit from 10000 to a lower amount for testing
+            "limit": 100,
             "maxValuesPerFacet": 1000,
             "facetFilters": [],
             "cursor": "0",
