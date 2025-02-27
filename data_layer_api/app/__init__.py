@@ -1,0 +1,14 @@
+from flask import Flask
+
+def create_app():
+    app = Flask(__name__)
+
+    from .search import search_bp
+    from .discussion import discussion_bp
+    from .course import course_bp
+
+    app.register_blueprint(search_bp, url_prefix='/search')
+    app.register_blueprint(discussion_bp, url_prefix='/discussion')
+    app.register_blueprint(course_bp, url_prefix='/course')
+
+    return app

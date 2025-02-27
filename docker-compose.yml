@@ -61,6 +61,13 @@ services:
       - postgres
 
 
+  data_layer_api:
+    build:
+      context: .
+      dockerfile: data_layer_api/Dockerfile
+    ports:
+      - "5000:5000"
+
 volumes:
   raw_course_data:
   ollama:
