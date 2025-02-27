@@ -49,3 +49,12 @@ def test_queries(courses: List[Course], vector_db: VectorDB, queries: List[str] 
             print("\n")
 
     vector_db.close()
+
+
+    '''
+    - Want to gauge how accurate our course embeddings are
+    - If a query is similar to a course (description), that course should pop up when you query the database
+    - Later on, will be able to see if queries perform differently for different course websites, e.g. get better results with coursera than udemy
+
+    - 
+    '''
