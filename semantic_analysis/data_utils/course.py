@@ -3,12 +3,12 @@ from typing import List, Optional
 from dataclasses import dataclass
 import os
 
-class CourseWebsite(Enum):
+class CourseWebsite(str, Enum):
     """
     CourseWebsite enum defines the platforms that we are retrieving data from
     """
-    COURSERA = 1
-    UDEMY =2
+    COURSERA = "COURSERA",
+    UDEMY = "UDEMY"
 
 
 @dataclass

@@ -1,8 +1,10 @@
 from data_utils.course import Course
 from typing import List
 from course_embedder.embedder import embed_course_vectors, get_embedding
-from database.vector_db import VectorDB
 from env import FORCE_EMBED
+import requests
+from dataclasses import asdict
+import json
 
 
 example_queries = [
@@ -23,29 +25,38 @@ example_queries = [
         "DevOps practices"
     ]
 
+DATA_LAYER_API = "http://data_layer_api:5000"
+DATA_LAYER_API_COURSE_INSERTION = f"{DATA_LAYER_API}/course/insert"
+DATA_LAYER_API_COURSE_CLEAR = f"{DATA_LAYER_API}/course/clear"
+DATA_LAYER_API_QUERY_COURSE = f"{DATA_LAYER_API}/course/query"
 
-def test_queries(courses: List[Course], vector_db: VectorDB, queries: List[str] = example_queries):
+def test_queries(courses: List[Course], queries: List[str] = example_queries):
     
     # Embed courses and store them in vector_db
     if FORCE_EMBED: 
         print("Forcing re-embedding of courses in data directory")
-        vector_db.clear()
+        clear_request_result = requests.post(DATA_LAYER_API_COURSE_CLEAR)
+        clear_request_result.raise_for_status()
         embedded_course_vectors: List[List[float]] = embed_course_vectors(courses)
-        for i, course_vector in enumerate(embedded_course_vectors):
-            vector_db.insert_vector(i, course_vector)
+        for course,course_vector in zip(courses,embedded_course_vectors):
+            payload = {"course": asdict(course), "course_vector": course_vector}
+            insert_request_result = requests.post(DATA_LAYER_API_COURSE_INSERTION, json = payload)
+            insert_request_result.raise_for_status()
+            print("Sucessfully uploaded course via data layer API")
+
     
-    # Embed queries and query vector_db
+    #Embed queries and query vector_db
     embedded_queries = [get_embedding(query) for query in queries]
     for query, query_vector in zip(queries, embedded_queries):
-        results = vector_db.query_vector(query_vector)
-        if not results:
+        query_post_result = requests.post(DATA_LAYER_API_QUERY_COURSE, json = {"query_vector": query_vector, "limit": 3})
+        query_post_result.raise_for_status()
+        similar_courses = query_post_result.json().get("courses", [])
+        if not similar_courses:
             print(f"Query: {query}")
             print("No similar courses found.\n")
         else:
             print(f"Query: {query}")
             print(f"Top 3 similar courses: \n")
-            for course in [courses[result[0]] for result in results]: 
-                print(f"{course}\n")
+            for course in similar_courses: 
+                print(f"{json.dumps(course, indent=2)}\n")
             print("\n")
-
-    vector_db.close()

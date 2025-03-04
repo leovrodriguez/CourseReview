@@ -31,5 +31,5 @@ An example workflow for a fresh start with developing on top of this service
 Pre Reqs: docker
 1. Clone the repository
 2. Limit the number of courses to parse in data_utils/save_raw_data.py (eventually these are also embedded)
-3. run `FORCE_EMBED=true, FORCE_PARSE=true docker-compose up -d --remove-orphans --build`
+3. run `FORCE_EMBED=true FORCE_PARSE=true docker-compose up -d --remove-orphans --build`
 

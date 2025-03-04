@@ -1,4 +1,3 @@
-# from ollama import embed
 import requests
 from typing import List
 from data_utils.course import Course
