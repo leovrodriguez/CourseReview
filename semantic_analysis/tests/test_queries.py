@@ -4,6 +4,7 @@ from course_embedder.embedder import embed_course_vectors, get_embedding
 from env import FORCE_EMBED
 import requests
 from dataclasses import asdict
+import json
 
 
 example_queries = [
@@ -37,7 +38,6 @@ def test_queries(courses: List[Course], queries: List[str] = example_queries):
         clear_request_result = requests.post(DATA_LAYER_API_COURSE_CLEAR)
         clear_request_result.raise_for_status()
         embedded_course_vectors: List[List[float]] = embed_course_vectors(courses)
-        print(f"Embedded {len(embedded_course_vectors)} from Ollama API")
         for course,course_vector in zip(courses,embedded_course_vectors):
             payload = {"course": asdict(course), "course_vector": course_vector}
             insert_request_result = requests.post(DATA_LAYER_API_COURSE_INSERTION, json = payload)
@@ -50,8 +50,7 @@ def test_queries(courses: List[Course], queries: List[str] = example_queries):
     for query, query_vector in zip(queries, embedded_queries):
         query_post_result = requests.post(DATA_LAYER_API_QUERY_COURSE, json = {"query_vector": query_vector, "limit": 3})
         query_post_result.raise_for_status()
-        print("Sucessfully query retrieved results from data layer API")
-        similar_courses = query_post_result.json()["courses"]
+        similar_courses = query_post_result.json().get("courses", [])
         if not similar_courses:
             print(f"Query: {query}")
             print("No similar courses found.\n")
@@ -59,5 +58,5 @@ def test_queries(courses: List[Course], queries: List[str] = example_queries):
             print(f"Query: {query}")
             print(f"Top 3 similar courses: \n")
             for course in similar_courses: 
-                print(f"{course}\n")
+                print(f"{json.dumps(course, indent=2)}\n")
             print("\n")

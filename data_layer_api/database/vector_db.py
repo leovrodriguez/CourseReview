@@ -8,7 +8,7 @@ class VectorDB(ABC):
         pass
 
     @abstractmethod
-    def query_course_vector(self, query: List[float], limit: int = 3) -> List[tuple]:
+    def query_course_vector(self, query: List[float], limit: int = 3):
         pass
 
     @abstractmethod

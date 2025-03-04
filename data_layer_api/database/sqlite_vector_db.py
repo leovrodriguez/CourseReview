@@ -14,6 +14,7 @@ def serialize_f32(vector: List[float]) -> bytes:
 class SQLiteVectorDB(VectorDB):
     def __init__(self, db_path: str):
         self.db = sqlite3.connect(db_path)
+        self.db.row_factory = sqlite3.Row
         self.db.enable_load_extension(True)
         sqlite_vec.load(self.db)
         self.db.enable_load_extension(False)
@@ -49,8 +50,6 @@ class SQLiteVectorDB(VectorDB):
     def insert_course(self, course: dict, vector: List[float]):
         print(f"Inserting course: {course}")
 
-        authors_json = json.dumps(course.get("authors", []))
-        skills_json = json.dumps(course.get("skills", []))
         with self.db:
             self.db.execute(
                 """
@@ -63,9 +62,10 @@ class SQLiteVectorDB(VectorDB):
                 (
                     course["name"],
                     course["original_website"],
-                    authors_json,
+                    # Should change in prod db if we want to reference artists somewhere in website besides semanticly searching
+                    ", ".join(map(str, course.get("authors", []))),
                     course.get("description", ""),
-                    skills_json,
+                    ", ".join(map(str, course.get("skills", []))),
                     course.get("rating", 0.0),
                     course.get("num_ratings", 0),
                     course.get("image_url", ""),
@@ -85,7 +85,7 @@ class SQLiteVectorDB(VectorDB):
                 ),
             )
 
-    def query_course_vector(self, query: List[float], limit: int = 3) -> List[tuple]:
+    def query_course_vector(self, query: List[float], limit: int = 3):
         query_str = serialize_f32(query)
         sql_query = f"""
             SELECT 
@@ -107,14 +107,15 @@ class SQLiteVectorDB(VectorDB):
             ORDER BY vec_courses.distance
         """
         rows = self.db.execute(sql_query, [query_str]).fetchall()
-        return rows
+        return [dict(tuple_entry) for tuple_entry in rows]
 
     def clear_courses(self):
         with self.db:
-            self.db.execute("DROP TABLE courses")
-            self.db.execute("DROP TABLE vec_courses")
-            #self.db.execute("DELETE FROM courses")
-            #self.db.execute("DELETE FROM vec_courses")
+            self.db.execute("DELETE FROM courses")
+            self.db.execute("DELETE FROM vec_courses")
+            # Uncomment to change schema on test runs
+            #self.db.execute("DROP TABLE vec_courses")
+            #self.db.execute("DROP TABLE courses")
 
     def close(self):
         self.db.close()

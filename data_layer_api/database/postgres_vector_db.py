@@ -99,41 +99,17 @@ class PostgresVectorDB(VectorDB):
             """)
             self.conn.commit()
     
-    # remove or update for new schema
+    # update for new schema
     def insert_course(self, course: dict, vector: List[float]):
-        # with self.conn.cursor() as cursor:
-        #     # Format the vector properly for pgvector
-        #     vector_str = self.pgvector_format(vector)
-
-        #     cursor.execute(
-        #         "INSERT INTO (vec_items rowid, embedding) VALUES (%s, %s)",
-        #         [rowid, vector_str]
-        #     )
-        #     self.conn.commit()
         pass
     
-    # remove or update for new schema
-    def query_course_vector(self, query: List[float], limit: int = 3) -> List[tuple]:
-        with self.conn.cursor() as cursor:
-            # Format the query vector for pgvector
-            query_str = f"[{','.join(map(str, query))}]"
-            cursor.execute("""
-                SELECT 
-                    rowid,
-                    1 - (embedding <=> %s) as similarity
-                FROM vec_items
-                ORDER BY embedding <=> %s
-                LIMIT %s
-            """, [query_str, query_str, limit])
-            # Return results in the same format as SQLite implementation
-            return [(row[0], row[1]) for row in cursor.fetchall()]
+    # update for new schema
+    def query_course_vector(self, query: List[float], limit: int = 3):
+        pass
     
-    # remove or update for new schema
+    # update for new schema
     def clear_courses(self):
-        with self.conn.cursor() as cursor:
-            cursor.execute("DELETE FROM vec_items")
-            self.conn.commit()
-    
-    # remove or update for new schema
+        pass
+
     def close(self):
         self.conn.close()
