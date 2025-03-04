@@ -34,6 +34,7 @@ def save_coursera_raw_data():
           {
             "entityType": "PRODUCTS",
             "limit": 10000,
+            # "limit": 10, # for lightweight testing
             "maxValuesPerFacet": 1000,
             "facetFilters": [],
             "cursor": "0",

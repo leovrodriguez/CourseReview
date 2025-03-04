@@ -10,18 +10,58 @@ services:
       - FORCE_EMBED=${FORCE_EMBED:-false}
       - DB_IMPLEMENTATION=${DB_IMPLEMENTATION:-sqlite}
       - DB_PATH=${DB_PATH:-/job/semantic_analysis/data/semantic_analysis.db}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=semantic_analysis
     depends_on:
-      - ollama
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
 
   ollama:
-      image: ollama/ollama
-      container_name: ollama
-      volumes:
-        - ollama:/root/.ollama
-      command: serve
-      expose:
-        - 11434
+    image: ollama/ollama
+    container_name: ollama
+    volumes:
+      - ollama:/root/.ollama
+    command: serve
+    expose:
+      - 11434
+  
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=semantic_analysis
+    ports:
+      - "5432:5432"
+    volumes: 
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
 
 volumes:
   raw_course_data:
   ollama:
+  postgres_data:
