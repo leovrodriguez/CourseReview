@@ -9,17 +9,9 @@ services:
       - FORCE_PARSE=${FORCE_PARSE:-false}
       - FORCE_EMBED=${FORCE_EMBED:-false}
       - DB_IMPLEMENTATION=${DB_IMPLEMENTATION:-sqlite}
-      - DB_PATH=${DB_PATH:-/job/semantic_analysis/data/semantic_analysis.db}
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=postgres
-      - DB_NAME=semantic_analysis
     depends_on:
-      postgres:
-        condition: service_healthy
-      ollama:
-        condition: service_started
+      - ollama
+      - data_layer_api
 
   ollama:
     image: ollama/ollama
@@ -60,15 +52,30 @@ services:
     depends_on:
       - postgres
 
-
   data_layer_api:
     build:
       context: .
       dockerfile: data_layer_api/Dockerfile
+    volumes:
+      - sql_lite_db:/server/data_layer_api/data
+    environment:
+      - DB_PATH=${DB_PATH:-/server/data_layer_api/datasemantic_analysis.db}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=semantic_analysis
+      - FLASK_ENV=development
+    expose:
+      - 5000
     ports:
       - "5000:5000"
+    depends_on:
+      postgres:
+          condition: service_healthy
 
 volumes:
   raw_course_data:
   ollama:
   postgres_data:
+  sql_lite_db:

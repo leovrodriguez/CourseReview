@@ -1,7 +1,7 @@
 # postgres_vector_db.py
 import psycopg2
 from typing import List
-from .vector_db import VectorDB
+from database.vector_db import VectorDB
 from env import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
 
 class PostgresVectorDB(VectorDB):
@@ -100,19 +100,20 @@ class PostgresVectorDB(VectorDB):
             self.conn.commit()
     
     # remove or update for new schema
-    def insert_vector(self, rowid: int, vector: List[float]):
-        with self.conn.cursor() as cursor:
-            # Format the vector properly for pgvector
-            vector_str = self.pgvector_format(vector)
+    def insert_course(self, course: dict, vector: List[float]):
+        # with self.conn.cursor() as cursor:
+        #     # Format the vector properly for pgvector
+        #     vector_str = self.pgvector_format(vector)
 
-            cursor.execute(
-                "INSERT INTO vec_items(rowid, embedding) VALUES (%s, %s)",
-                [rowid, vector_str]
-            )
-            self.conn.commit()
+        #     cursor.execute(
+        #         "INSERT INTO (vec_items rowid, embedding) VALUES (%s, %s)",
+        #         [rowid, vector_str]
+        #     )
+        #     self.conn.commit()
+        pass
     
     # remove or update for new schema
-    def query_vector(self, query: List[float], limit: int = 3) -> List[tuple]:
+    def query_course_vector(self, query: List[float], limit: int = 3) -> List[tuple]:
         with self.conn.cursor() as cursor:
             # Format the query vector for pgvector
             query_str = f"[{','.join(map(str, query))}]"
@@ -128,7 +129,7 @@ class PostgresVectorDB(VectorDB):
             return [(row[0], row[1]) for row in cursor.fetchall()]
     
     # remove or update for new schema
-    def clear(self):
+    def clear_courses(self):
         with self.conn.cursor() as cursor:
             cursor.execute("DELETE FROM vec_items")
             self.conn.commit()

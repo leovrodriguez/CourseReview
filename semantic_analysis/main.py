@@ -1,6 +1,5 @@
 from data_utils.save_raw_data import write_raw_data
 from data_utils.clean_scraped_courses import normalized_courses
-from database.db_factory import get_vector_db
 from tests.test_queries import test_queries
 
 
@@ -16,4 +15,4 @@ This script will:
 
 if __name__ == "__main__":
     write_raw_data()
-    test_queries(normalized_courses(), get_vector_db()) #just run tests for poc
+    test_queries(normalized_courses()) #just run tests for poc

@@ -4,19 +4,18 @@ from typing import List
 
 class VectorDB(ABC):
     @abstractmethod
-    def insert_vector(self, rowid: int, vector: List[float]):
+    def insert_course(self, course: dict, vector: List[float]):
         pass
 
     @abstractmethod
-    def query_vector(self, query: List[float], limit: int = 3) -> List[tuple]:
+    def query_course_vector(self, query: List[float], limit: int = 3) -> List[tuple]:
         pass
 
     @abstractmethod
-    def clear(self):
+    def clear_courses(self):
         pass
 
     @abstractmethod
     def close(self):
         pass
-
 
