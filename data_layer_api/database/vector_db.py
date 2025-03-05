@@ -1,10 +1,11 @@
 # semantic_analysis/vector_db.py
 from abc import ABC, abstractmethod
 from typing import List
+from classes.course import Course
 
 class VectorDB(ABC):
     @abstractmethod
-    def insert_course(self, course: dict, vector: List[float]):
+    def insert_course(self, course: Course, vector: List[float]):
         pass
 
     @abstractmethod

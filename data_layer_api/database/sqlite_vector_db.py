@@ -4,6 +4,7 @@ from typing import List
 import struct
 from .vector_db import VectorDB
 import json
+from classes.course import Course
 
 def serialize_f32(vector: List[float]) -> bytes:
     """Serializes a list of floats into a compact "raw bytes" format"""
@@ -47,7 +48,7 @@ class SQLiteVectorDB(VectorDB):
             """
         )
 
-    def insert_course(self, course: dict, vector: List[float]):
+    def insert_course(self, course: Course, vector: List[float]):
         print(f"Inserting course: {course}")
 
         with self.db:
@@ -60,17 +61,16 @@ class SQLiteVectorDB(VectorDB):
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    course["name"],
-                    course["original_website"],
-                    # Should change in prod db if we want to reference artists somewhere in website besides semanticly searching
-                    ", ".join(map(str, course.get("authors", []))),
-                    course.get("description", ""),
-                    ", ".join(map(str, course.get("skills", []))),
-                    course.get("rating", 0.0),
-                    course.get("num_ratings", 0),
-                    course.get("image_url", ""),
-                    course.get("is_free", False),
-                    course.get("url", ""),
+                    course.name,
+                    course.original_website,
+                    ", ".join(map(str, course.authors)),
+                    course.description,
+                    ", ".join(map(str, course.skills)),
+                    course.rating,
+                    course.num_ratings,
+                    course.image_url,
+                    course.is_free,
+                    course.url,
                 ),
             )
             self.db.execute(
@@ -79,8 +79,8 @@ class SQLiteVectorDB(VectorDB):
                 VALUES ((SELECT rowid FROM courses WHERE name = ? AND original_website = ?), ?)
                 """,
                 (
-                    course["name"],
-                    course["original_website"],
+                    course.name,
+                    course.original_website,
                     serialize_f32(vector),
                 ),
             )
@@ -114,8 +114,8 @@ class SQLiteVectorDB(VectorDB):
             self.db.execute("DELETE FROM courses")
             self.db.execute("DELETE FROM vec_courses")
             # Uncomment to change schema on test runs
-            #self.db.execute("DROP TABLE vec_courses")
-            #self.db.execute("DROP TABLE courses")
+            self.db.execute("DROP TABLE vec_courses")
+            self.db.execute("DROP TABLE courses")
 
     def close(self):
         self.db.close()

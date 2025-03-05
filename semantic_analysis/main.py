@@ -16,7 +16,7 @@ This script will:
 if __name__ == "__main__":
     
     # commented out job for testing other stuff
-    print("Do nothing for testing")
+    # print("Do nothing for testing")
     
-    # write_raw_data()
-    # test_queries(normalized_courses()) #just run tests for poc
+    write_raw_data()
+    test_queries(normalized_courses()) #just run tests for poc
