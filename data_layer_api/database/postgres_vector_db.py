@@ -1,8 +1,16 @@
-# postgres_vector_db.py
 import psycopg2
 from typing import List
 from database.vector_db import VectorDB
 from env import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
+
+# Import the dataclasses
+from classes.course import Course
+from classes.user import User
+from classes.learning_journey import LearningJourney, LearningJourneyCourse
+from classes.discussion import Discussion
+from classes.reply import Reply
+from classes.like import Like, LikeObjectType
+
 
 class PostgresVectorDB(VectorDB):
     def __init__(self):
@@ -22,32 +30,46 @@ class PostgresVectorDB(VectorDB):
     
     def create_tables(self):
         with self.conn.cursor() as cursor:
+
+            cursor.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+            self.conn.commit()
+
             cursor.execute("""
             -- Users Table
             CREATE TABLE IF NOT EXISTS users (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                username VARCHAR(50) UNIQUE NOT NULL,
-                email VARCHAR(100) UNIQUE NOT NULL,
+                username TEXT UNIQUE NOT NULL,
+                email TEXT UNIQUE NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
             -- Courses Table
             CREATE TABLE IF NOT EXISTS courses (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                title VARCHAR(255) NOT NULL,
-                description TEXT,
-                platform VARCHAR(50) NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT, --nullable
+                platform TEXT NOT NULL CHECK (platform IN ('coursera', 'udemy')),
+                url TEXT NOT NULL,
+                authors TEXT[] NOT NULL,
+                skills TEXT[] NOT NULL,
+                -- skills and author data is inconsistent across platforms
+                -- so we store them in arrays instead of relational tables
                 rating DECIMAL(3,2) DEFAULT 0,
-                num_reviews INT DEFAULT 0,
-                embedding vector(768), -- Added vector embedding
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                num_ratings INT DEFAULT 0,
+                image_url TEXT NOT NULL,
+                is_free BOOLEAN DEFAULT FALSE,
+                embedding vector(768) NOT NULL, -- Added vector embedding
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                -- urls are resource locators for courses on their respective platforms
+                -- urls by nature should uniquely identify a course
+                UNIQUE (platform, url)
             );
 
             -- Learning Journeys Table
             CREATE TABLE IF NOT EXISTS learning_journeys (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-                title VARCHAR(255) NOT NULL,
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                title TEXT NOT NULL,
                 description TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
@@ -55,8 +77,8 @@ class PostgresVectorDB(VectorDB):
             -- Learning Journey Courses (to maintain order)
             CREATE TABLE IF NOT EXISTS learning_journey_courses (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                learning_journey_id UUID REFERENCES learning_journeys(id) ON DELETE CASCADE,
-                course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+                learning_journey_id UUID NOT NULL REFERENCES learning_journeys(id) ON DELETE CASCADE,
+                course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
                 course_order INT NOT NULL CHECK (course_order > 0),
                 UNIQUE (learning_journey_id, course_order)
             );
@@ -64,12 +86,12 @@ class PostgresVectorDB(VectorDB):
             -- Discussions Table
             CREATE TABLE IF NOT EXISTS discussions (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
                 learning_journey_id UUID REFERENCES learning_journeys(id) ON DELETE CASCADE,
-                title VARCHAR(255) NOT NULL,
+                title TEXT NOT NULL,
                 description TEXT NOT NULL,
-                embedding vector(768), -- Added vector embedding
+                embedding vector(768) NOT NULL, -- Added vector embedding
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 CHECK (
                     (course_id IS NOT NULL AND learning_journey_id IS NULL) OR 
@@ -80,34 +102,1153 @@ class PostgresVectorDB(VectorDB):
             -- Replies Table
             CREATE TABLE IF NOT EXISTS replies (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-                discussion_id UUID REFERENCES discussions(id) ON DELETE CASCADE,
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                discussion_id UUID NOT NULL REFERENCES discussions(id) ON DELETE CASCADE,
                 text TEXT NOT NULL,
-                embedding vector(768), -- Added vector embedding
+                embedding vector(768) NOT NULL, -- Added vector embedding
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
             -- Likes Table (tracks likes on multiple objects)
             CREATE TABLE IF NOT EXISTS likes (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 object_id UUID NOT NULL,
-                object_type VARCHAR(50) CHECK (object_type IN ('course', 'learning_journey', 'discussion', 'reply')), 
+                object_type TEXT NOT NULL CHECK (object_type IN ('course', 'learning_journey', 'discussion', 'reply')), 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE (user_id, object_id, object_type)
             );
             """)
             self.conn.commit()
+   
     
-    # update for new schema
-    def insert_course(self, course: dict, vector: List[float]):
-        pass
+# Course Queries    
+    def insert_course(self, course: Course, vector: List[float]):
+        """
+        Insert a course into the courses table.
+        
+        Args:
+            course (Course): The course object to insert
+            vector (List[float]): The embedding vector for the course
+            
+        Returns:
+            UUID: The ID of the inserted course
+        """
+        with self.conn.cursor() as cursor:
+            # Format the vector properly for pgvector
+            vector_str = self.pgvector_format(vector)
+            
+            # Convert the platform enum to match the check constraint in the DB
+            # The enum values are tuples, so we need the first element without the comma
+            platform = course.original_website.value.lower()
+            print("plat test: ")
+            print(platform)
+            
+            # Check if course already exists
+            cursor.execute(
+                "SELECT id FROM courses WHERE platform = %s AND url = %s",
+                [platform, course.url]
+            )
+            existing_course = cursor.fetchone()
+            
+            if existing_course:
+                # If course exists, return the existing course ID
+                print("Course already exists") # test
+                course_id = existing_course[0]
+                self.conn.commit()
+                return course_id
+                
+            # If course doesn't exist, insert new course
+            cursor.execute("""
+                INSERT INTO courses (
+                    title, 
+                    description, 
+                    platform, 
+                    url, 
+                    authors, 
+                    skills, 
+                    rating, 
+                    num_ratings, 
+                    image_url, 
+                    is_free,
+                    embedding
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, [
+                course.name,                   # title
+                course.description,            # description
+                platform,                      # platform (lowercase)
+                course.url,                    # url
+                course.authors,                # authors (as array)
+                course.skills,                 # skills (as array)
+                course.rating,                 # rating
+                course.num_ratings,            # num_ratings
+                course.image_url,              # image_url
+                course.is_free,                # is_free
+                vector_str                     # embedding
+            ])
+            
+            # Get the generated course ID
+            course_id = cursor.fetchone()[0]
+            self.conn.commit()
+            
+        return course_id
     
-    # update for new schema
-    def query_course_vector(self, query: List[float], limit: int = 3):
-        pass
+    def delete_course(self, course_id=None, platform=None, url=None):
+        """
+        Delete a course from the courses table by either its ID or platform/url combination.
+        
+        Args:
+            course_id (UUID, optional): The ID of the course to delete
+            platform (str, optional): The platform of the course to delete
+            url (str, optional): The URL of the course to delete
+            
+        Returns:
+            bool: True if a course was deleted, False otherwise
+        """
+        with self.conn.cursor() as cursor:
+            if course_id:
+                # Delete by course ID
+                cursor.execute("DELETE FROM courses WHERE id = %s", [course_id])
+            elif platform and url:
+                # Delete by platform and URL combination
+                cursor.execute("DELETE FROM courses WHERE platform = %s AND url = %s", 
+                            [platform.lower(), url])
+            else:
+                raise ValueError("Either course_id or both platform and url must be provided")
+            
+            # Check if any rows were deleted
+            rows_deleted = cursor.rowcount
+            self.conn.commit()
+            
+        return rows_deleted > 0
+
+
+# User Queries
+    def insert_user(self, user: User):
+        """
+        Insert a user into the users table.
+        
+        Args:
+            user (User): The user object to insert
+            
+        Returns:
+            UUID: The ID of the inserted user
+        """
+        with self.conn.cursor() as cursor:
+            # Check if user already exists
+            cursor.execute(
+                "SELECT id FROM users WHERE username = %s OR email = %s",
+                [user.username, user.email]
+            )
+            existing_user = cursor.fetchone()
+            
+            if existing_user:
+                # If user exists, return the existing user ID
+                user_id = existing_user[0]
+                self.conn.commit()
+                return user_id
+                
+            # If user doesn't exist, insert new user
+            cursor.execute("""
+                INSERT INTO users (
+                    username,
+                    email
+                ) VALUES (%s, %s)
+                RETURNING id
+            """, [
+                user.username,
+                user.email
+            ])
+            
+            # Get the generated user ID
+            user_id = cursor.fetchone()[0]
+            self.conn.commit()
+            
+        return user_id
+
+    def delete_user(self, user_id=None, username=None, email=None):
+        """
+        Delete a user from the users table by ID, username, or email.
+        
+        Args:
+            user_id (UUID, optional): The ID of the user to delete
+            username (str, optional): The username of the user to delete
+            email (str, optional): The email of the user to delete
+            
+        Returns:
+            bool: True if a user was deleted, False otherwise
+        """
+        with self.conn.cursor() as cursor:
+            if user_id:
+                # Delete by user ID
+                cursor.execute("DELETE FROM users WHERE id = %s", [user_id])
+            elif username:
+                # Delete by username
+                cursor.execute("DELETE FROM users WHERE username = %s", [username])
+            elif email:
+                # Delete by email
+                cursor.execute("DELETE FROM users WHERE email = %s", [email])
+            else:
+                raise ValueError("Either user_id, username, or email must be provided")
+            
+            # Check if any rows were deleted
+            rows_deleted = cursor.rowcount
+            self.conn.commit()
+            
+        return rows_deleted > 0
+
+
+# Learning Journey Queries
+    def insert_learning_journey(self, learning_journey: LearningJourney):
+        """
+        Insert a learning journey into the learning_journeys table.
+        
+        Args:
+            learning_journey (LearningJourney): The learning journey object to insert
+            
+        Returns:
+            UUID: The ID of the inserted learning journey
+        """
+        with self.conn.cursor() as cursor: 
+            cursor.execute("""
+                INSERT INTO learning_journeys (
+                    user_id,
+                    title,
+                    description
+                ) VALUES (%s, %s, %s)
+                RETURNING id
+            """, [
+                learning_journey.user_id,
+                learning_journey.title,
+                learning_journey.description
+            ])
+            
+            # Get the generated learning journey ID
+            journey_id = cursor.fetchone()[0]
+            self.conn.commit()
+
+        return journey_id
+
+    def delete_learning_journey(self, journey_id):
+        """
+        Delete a learning journey from the learning_journeys table.
+        
+        Args:
+            journey_id (UUID): The ID of the learning journey to delete
+            
+        Returns:
+            bool: True if a learning journey was deleted, False otherwise
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("DELETE FROM learning_journeys WHERE id = %s", [journey_id])
+            
+            # Check if any rows were deleted
+            rows_deleted = cursor.rowcount
+            self.conn.commit()
+            
+            return rows_deleted > 0
+
+    def get_learning_journeys_by_user(self, user_id):
+        """
+        Get all learning journeys created by a specific user.
+        
+        Args:
+            user_id (UUID): The ID of the user
+            
+        Returns:
+            List[Dict]: List of learning journeys with basic information
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    lj.id, 
+                    lj.title, 
+                    lj.description, 
+                    lj.created_at,
+                    (SELECT COUNT(*) FROM learning_journey_courses WHERE learning_journey_id = lj.id) as course_count
+                FROM 
+                    learning_journeys lj
+                WHERE 
+                    lj.user_id = %s
+                ORDER BY 
+                    lj.created_at DESC
+            """, [user_id])
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            
+            for row in cursor.fetchall():
+                # Convert row to dictionary
+                journey_dict = dict(zip(columns, row))
+                results.append(journey_dict)
+                
+        return results
+
+
+# Learning Journey Course Queries
+    def get_learning_journeys_by_course(self, course_id):
+        """
+        Get all learning journeys that include a specific course.
+        
+        Args:
+            course_id (UUID): The ID of the course
+            
+        Returns:
+            List[Dict]: List of learning journeys with their creator information
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    lj.id, 
+                    lj.title, 
+                    lj.description, 
+                    lj.created_at,
+                    ljc.course_order,
+                    u.id as user_id,
+                    u.username,
+                    (SELECT COUNT(*) FROM learning_journey_courses WHERE learning_journey_id = lj.id) as total_courses
+                FROM 
+                    learning_journeys lj
+                JOIN 
+                    learning_journey_courses ljc ON lj.id = ljc.learning_journey_id
+                JOIN 
+                    users u ON lj.user_id = u.id
+                WHERE 
+                    ljc.course_id = %s
+                ORDER BY 
+                    lj.created_at DESC
+            """, [course_id])
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            
+            for row in cursor.fetchall():
+                # Convert row to dictionary
+                journey_dict = dict(zip(columns, row))
+                results.append(journey_dict)
+                
+        return results
+
+    def insert_learning_journey_course(self, learning_journey_course: LearningJourneyCourse):
+        """
+        Insert a mapping between a learning journey and a course with specified order.
+        
+        Args:
+            learning_journey_course (LearningJourneyCourse): The mapping object to insert
+            
+        Returns:
+            UUID: The ID of the inserted mapping
+        """
+        with self.conn.cursor() as cursor:
+            # Check if the mapping already exists
+            cursor.execute(
+                "SELECT id FROM learning_journey_courses WHERE learning_journey_id = %s AND course_id = %s",
+                [learning_journey_course.learning_journey_id, learning_journey_course.course_id]
+            )
+            existing_mapping = cursor.fetchone()
+            
+            if existing_mapping:
+                # If mapping exists, return the existing mapping ID
+                mapping_id = existing_mapping[0]
+                self.conn.commit()
+                return mapping_id
+                
+            # Check if the course order already exists for this learning journey
+            cursor.execute(
+                "SELECT id FROM learning_journey_courses WHERE learning_journey_id = %s AND course_order = %s",
+                [learning_journey_course.learning_journey_id, learning_journey_course.course_order]
+            )
+            existing_order = cursor.fetchone()
+            
+            if existing_order:
+                # If the order exists, we need to update all higher orders
+                cursor.execute("""
+                    UPDATE learning_journey_courses 
+                    SET course_order = course_order + 1
+                    WHERE learning_journey_id = %s AND course_order >= %s
+                    ORDER BY course_order DESC
+                """, [
+                    learning_journey_course.learning_journey_id,
+                    learning_journey_course.course_order
+                ])
+            
+            # Insert the new mapping
+            cursor.execute("""
+                INSERT INTO learning_journey_courses (
+                    learning_journey_id,
+                    course_id,
+                    course_order
+                ) VALUES (%s, %s, %s)
+                RETURNING id
+            """, [
+                learning_journey_course.learning_journey_id,
+                learning_journey_course.course_id,
+                learning_journey_course.course_order
+            ])
+            
+            # Get the generated mapping ID
+            mapping_id = cursor.fetchone()[0]
+            self.conn.commit()
+            
+        return mapping_id
+
+    def delete_learning_journey_course(self, mapping_id=None, learning_journey_id=None, course_id=None):
+        """
+        Delete a learning journey course mapping by ID, or by learning journey ID and course ID.
+        
+        Args:
+            mapping_id (UUID, optional): The ID of the mapping to delete
+            learning_journey_id (UUID, optional): The learning journey ID
+            course_id (UUID, optional): The course ID
+            
+        Returns:
+            bool: True if a mapping was deleted, False otherwise
+        """
+        with self.conn.cursor() as cursor:
+            deleted_mapping = None
+            deleted_order = None
+            
+            if mapping_id:
+                # Get the learning journey ID and order before deleting
+                cursor.execute(
+                    "SELECT learning_journey_id, course_order FROM learning_journey_courses WHERE id = %s", 
+                    [mapping_id]
+                )
+                result = cursor.fetchone()
+                if result:
+                    deleted_mapping = result[0]
+                    deleted_order = result[1]
+                
+                # Delete by mapping ID
+                cursor.execute("DELETE FROM learning_journey_courses WHERE id = %s", [mapping_id])
+            elif learning_journey_id and course_id:
+                # Get the order before deleting
+                cursor.execute(
+                    "SELECT course_order FROM learning_journey_courses WHERE learning_journey_id = %s AND course_id = %s", 
+                    [learning_journey_id, course_id]
+                )
+                result = cursor.fetchone()
+                if result:
+                    deleted_mapping = learning_journey_id
+                    deleted_order = result[0]
+                
+                # Delete by learning journey ID and course ID
+                cursor.execute(
+                    "DELETE FROM learning_journey_courses WHERE learning_journey_id = %s AND course_id = %s", 
+                    [learning_journey_id, course_id]
+                )
+            else:
+                raise ValueError("Either mapping_id or both learning_journey_id and course_id must be provided")
+            
+            # Check if any rows were deleted
+            rows_deleted = cursor.rowcount
+            
+            # If rows were deleted and we know the learning journey ID and order,
+            # update the remaining course orders to ensure there are no gaps
+            if rows_deleted > 0 and deleted_mapping and deleted_order:
+                cursor.execute("""
+                    UPDATE learning_journey_courses
+                    SET course_order = course_order - 1
+                    WHERE learning_journey_id = %s AND course_order > %s
+                """, [deleted_mapping, deleted_order])
+            
+            self.conn.commit()
+            
+        return rows_deleted > 0
+
+    def get_learning_journey_courses(self, learning_journey_id: str):
+        """
+        Get all courses for a specific learning journey, ordered by course_order.
+        
+        Args:
+            learning_journey_id (UUID): The ID of the learning journey
+            
+        Returns:
+            List[Dict]: List of courses with their order information
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT c.id, c.title, c.description, c.platform, c.url, 
+                    c.authors, c.skills, c.rating, c.num_ratings, 
+                    c.image_url, c.is_free, ljc.course_order
+                FROM learning_journey_courses ljc
+                JOIN courses c ON ljc.course_id = c.id
+                WHERE ljc.learning_journey_id = %s
+                ORDER BY ljc.course_order
+            """, [learning_journey_id])
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            
+            for row in cursor.fetchall():
+                # Convert row to dictionary
+                course_dict = dict(zip(columns, row))
+                results.append(course_dict)
+                
+        return results
+
+
+# Discussion Queries
+    def insert_discussion(self, discussion: Discussion, vector: List[float]):
+        """
+        Insert a discussion into the discussions table.
+        
+        Args:
+            discussion (Discussion): The discussion object to insert
+            vector (List[float]): The embedding vector for the discussion content
+            
+        Returns:
+            UUID: The ID of the inserted discussion
+        """
+        # Validate that either course_id or learning_journey_id is provided, but not both
+        if (discussion.course_id is None and discussion.learning_journey_id is None) or \
+        (discussion.course_id is not None and discussion.learning_journey_id is not None):
+            raise ValueError("Either course_id or learning_journey_id must be provided, but not both")
+        
+        with self.conn.cursor() as cursor:
+            # Format the vector for pgvector
+            vector_str = self.pgvector_format(vector)
+            
+            # Insert the discussion
+            cursor.execute("""
+                INSERT INTO discussions (
+                    user_id,
+                    course_id,
+                    learning_journey_id,
+                    title,
+                    description,
+                    embedding
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, [
+                discussion.user_id,
+                discussion.course_id,
+                discussion.learning_journey_id,
+                discussion.title,
+                discussion.description,
+                vector_str
+            ])
+            
+            # Get the generated discussion ID
+            discussion_id = cursor.fetchone()[0]
+            self.conn.commit()
+            
+        return discussion_id
+
+    def delete_discussion(self, discussion_id):
+        """
+        Delete a discussion from the discussions table.
+        
+        Args:
+            discussion_id (UUID): The ID of the discussion to delete
+            
+        Returns:
+            bool: True if a discussion was deleted, False otherwise
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("DELETE FROM discussions WHERE id = %s", [discussion_id])
+            
+            # Check if any rows were deleted
+            rows_deleted = cursor.rowcount
+            self.conn.commit()
+            
+        return rows_deleted > 0
+
+    def get_discussions_by_course(self, course_id):
+        """
+        Get all discussions for a specific course.
+        
+        Args:
+            course_id (UUID): The ID of the course
+            
+        Returns:
+            List[Dict]: List of discussions
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT d.id, d.title, d.description, d.user_id, u.username,
+                    d.created_at
+                FROM discussions d
+                JOIN users u ON d.user_id = u.id
+                WHERE d.course_id = %s
+                ORDER BY d.created_at DESC
+            """, [course_id])
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            
+            for row in cursor.fetchall():
+                # Convert row to dictionary
+                discussion_dict = dict(zip(columns, row))
+                results.append(discussion_dict)
+                
+        return results
+
+    def get_discussions_by_learning_journey(self, learning_journey_id):
+        """
+        Get all discussions for a specific learning journey.
+        
+        Args:
+            learning_journey_id (UUID): The ID of the learning journey
+            
+        Returns:
+            List[Dict]: List of discussions
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT d.id, d.title, d.description, d.user_id, u.username,
+                    d.created_at
+                FROM discussions d
+                JOIN users u ON d.user_id = u.id
+                WHERE d.learning_journey_id = %s
+                ORDER BY d.created_at DESC
+            """, [learning_journey_id])
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            
+            for row in cursor.fetchall():
+                # Convert row to dictionary
+                discussion_dict = dict(zip(columns, row))
+                results.append(discussion_dict)
+                
+        return results
+
+
+# Reply Queries
+    def insert_reply(self, reply: Reply, vector: List[float]):
+        """
+        Insert a reply into the replies table.
+        
+        Args:
+            reply (Reply): The reply object to insert
+            vector (List[float]): The embedding vector for the reply text
+            
+        Returns:
+            UUID: The ID of the inserted reply
+        """
+        with self.conn.cursor() as cursor:
+            # Format the vector properly for pgvector
+            vector_str = self.pgvector_format(vector)
+            
+            # Insert the reply
+            cursor.execute("""
+                INSERT INTO replies (
+                    user_id,
+                    discussion_id,
+                    text,
+                    embedding
+                ) VALUES (%s, %s, %s, %s)
+                RETURNING id
+            """, [
+                reply.user_id,
+                reply.discussion_id,
+                reply.text,
+                vector_str
+            ])
+            
+            # Get the generated reply ID
+            reply_id = cursor.fetchone()[0]
+            self.conn.commit()
+            
+        return reply_id
+
+    def delete_reply(self, reply_id):
+        """
+        Delete a reply from the replies table.
+        
+        Args:
+            reply_id (UUID): The ID of the reply to delete
+            
+        Returns:
+            bool: True if a reply was deleted, False otherwise
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("DELETE FROM replies WHERE id = %s", [reply_id])
+            
+            # Check if any rows were deleted
+            rows_deleted = cursor.rowcount
+            self.conn.commit()
+            
+        return rows_deleted > 0
+
+    def get_replies_by_discussion(self, discussion_id):
+        """
+        Get all replies for a specific discussion.
+        
+        Args:
+            discussion_id (UUID): The ID of the discussion
+            
+        Returns:
+            List[Dict]: List of replies with user information
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    r.id, 
+                    r.text, 
+                    r.created_at,
+                    r.user_id,
+                    u.username
+                FROM 
+                    replies r
+                JOIN 
+                    users u ON r.user_id = u.id
+                WHERE 
+                    r.discussion_id = %s
+                ORDER BY 
+                    r.created_at ASC
+            """, [discussion_id])
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            
+            for row in cursor.fetchall():
+                # Convert row to dictionary
+                reply_dict = dict(zip(columns, row))
+                results.append(reply_dict)
+                
+        return results
+
+
+# Like Queries
+    def insert_like(self, like: Like):
+        """
+        Insert a like into the likes table.
+        If the like already exists (same user, object, and type), it won't create a duplicate.
+        
+        Args:
+            like (Like): The like object to insert
+            
+        Returns:
+            UUID or None: The ID of the inserted like, or None if it already exists
+        """
+        with self.conn.cursor() as cursor:
+            # Check if like already exists
+            cursor.execute(
+                "SELECT id FROM likes WHERE user_id = %s AND object_id = %s AND object_type = %s",
+                [like.user_id, like.object_id, like.object_type.value]
+            )
+            existing_like = cursor.fetchone()
+            
+            if existing_like:
+                # Like already exists, return the existing like ID
+                self.conn.commit()
+                return existing_like[0]
+                
+            # Insert the like
+            cursor.execute("""
+                INSERT INTO likes (
+                    user_id,
+                    object_id,
+                    object_type
+                ) VALUES (%s, %s, %s)
+                RETURNING id
+            """, [
+                like.user_id,
+                like.object_id,
+                like.object_type.value
+            ])
+            
+            # Get the generated like ID
+            like_id = cursor.fetchone()[0]
+            self.conn.commit()
+            
+        return like_id
+
+    def delete_like(self, user_id, object_id, object_type: LikeObjectType):
+        """
+        Delete a like from the likes table.
+        
+        Args:
+            user_id (UUID): The ID of the user who liked the object
+            object_id (UUID): The ID of the liked object
+            object_type (LikeObjectType or str): The type of the liked object
+            
+        Returns:
+            bool: True if a like was deleted, False otherwise
+        """
+        # Convert object_type to string if it's an enum
+        object_type = object_type.value
+            
+        with self.conn.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM likes WHERE user_id = %s AND object_id = %s AND object_type = %s",
+                [user_id, object_id, object_type]
+            )
+            
+            # Check if any rows were deleted
+            rows_deleted = cursor.rowcount
+            self.conn.commit()
+            
+        return rows_deleted > 0
+
+    def get_liked_learning_journeys_by_user(self, user_id):
+        """
+        Get all learning journeys liked by a specific user.
+        
+        Args:
+            user_id (UUID): The ID of the user
+            
+        Returns:
+            List[Dict]: List of liked learning journeys with basic information
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    lj.id, 
+                    lj.title, 
+                    lj.description, 
+                    lj.created_at,
+                    u.username as creator_username,
+                    l.created_at as liked_at,
+                    (SELECT COUNT(*) FROM learning_journey_courses WHERE learning_journey_id = lj.id) as course_count
+                FROM 
+                    likes l
+                JOIN 
+                    learning_journeys lj ON l.object_id = lj.id
+                JOIN 
+                    users u ON lj.user_id = u.id
+                WHERE 
+                    l.user_id = %s AND 
+                    l.object_type = 'learning_journey'
+                ORDER BY 
+                    l.created_at DESC
+            """, [user_id])
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            
+            for row in cursor.fetchall():
+                # Convert row to dictionary
+                journey_dict = dict(zip(columns, row))
+                results.append(journey_dict)
+                
+        return results
+
+    def get_liked_courses_by_user(self, user_id):
+        """
+        Get all courses liked by a specific user.
+        
+        Args:
+            user_id (UUID): The ID of the user
+            
+        Returns:
+            List[Dict]: List of liked courses with basic information
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    c.id, 
+                    c.title, 
+                    c.description, 
+                    c.platform,
+                    c.rating,
+                    c.num_ratings,
+                    c.image_url,
+                    c.is_free,
+                    c.authors,
+                    c.skills,
+                    l.created_at as liked_at
+                FROM 
+                    likes l
+                JOIN 
+                    courses c ON l.object_id = c.id
+                WHERE 
+                    l.user_id = %s AND 
+                    l.object_type = 'course'
+                ORDER BY 
+                    l.created_at DESC
+            """, [user_id])
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            
+            for row in cursor.fetchall():
+                # Convert row to dictionary
+                course_dict = dict(zip(columns, row))
+                results.append(course_dict)
+                
+        return results
+
+    def get_like_count(self, object_id, object_type: LikeObjectType):
+        """
+        Get the number of likes for a specific object.
+        
+        Args:
+            object_id (UUID): The ID of the object
+            object_type (LikeObjectType or str): The type of the object
+            
+        Returns:
+            int: The number of likes
+        """
+        object_type = object_type.value
+            
+        with self.conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT COUNT(*) FROM likes WHERE object_id = %s AND object_type = %s",
+                [object_id, object_type]
+            )
+            
+            count = cursor.fetchone()[0]
+            
+        return count
     
-    # update for new schema
+
+# Vector Search Queries
+    def query_course_vectors(self, query_vector: List[float], limit: int = 10, threshold: float = 0.5):
+        """
+        Search for courses similar to the given query vector.
+        
+        Args:
+            query_vector (List[float]): The query embedding vector
+            limit (int): Maximum number of results to return
+            threshold (float): Minimum similarity threshold (0-1)
+            
+        Returns:
+            List[Dict]: List of courses with similarity scores
+        """
+        with self.conn.cursor() as cursor:
+            # Format the query vector for pgvector
+            vector_str = self.pgvector_format(query_vector)
+            
+            cursor.execute("""
+                SELECT 
+                    c.id, 
+                    c.title, 
+                    c.description,
+                    c.platform,
+                    c.authors,
+                    c.skills,
+                    c.rating,
+                    c.num_ratings,
+                    c.image_url,
+                    c.is_free,
+                    c.url,
+                    1 - (c.embedding <=> %s) as similarity
+                FROM 
+                    courses c
+                WHERE 
+                    1 - (c.embedding <=> %s) > %s
+                ORDER BY 
+                    c.embedding <=> %s
+                LIMIT %s
+            """, [vector_str, vector_str, threshold, vector_str, limit])
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            
+            for row in cursor.fetchall():
+                # Convert row to dictionary
+                course_dict = dict(zip(columns, row))
+                results.append(course_dict)
+                
+        return results
+
+    def query_discussion_vectors(self, query_vector: List[float], limit: int = 10, threshold: float = 0.5):
+        """
+        Search for discussions similar to the given query vector.
+        
+        Args:
+            query_vector (List[float]): The query embedding vector
+            limit (int): Maximum number of results to return
+            threshold (float): Minimum similarity threshold (0-1)
+            
+        Returns:
+            List[Dict]: List of discussions with similarity scores
+        """
+        with self.conn.cursor() as cursor:
+            # Format the query vector for pgvector
+            vector_str = self.pgvector_format(query_vector)
+            
+            cursor.execute("""
+                SELECT 
+                    d.id, 
+                    d.title, 
+                    d.description,
+                    d.created_at,
+                    u.username as author,
+                    CASE 
+                        WHEN d.course_id IS NOT NULL THEN 'course'
+                        ELSE 'learning_journey'
+                    END as context_type,
+                    COALESCE(d.course_id, d.learning_journey_id) as context_id,
+                    COALESCE(c.title, lj.title) as context_title,
+                    1 - (d.embedding <=> %s) as similarity
+                FROM 
+                    discussions d
+                JOIN 
+                    users u ON d.user_id = u.id
+                LEFT JOIN 
+                    courses c ON d.course_id = c.id
+                LEFT JOIN 
+                    learning_journeys lj ON d.learning_journey_id = lj.id
+                WHERE 
+                    1 - (d.embedding <=> %s) > %s
+                ORDER BY 
+                    d.embedding <=> %s
+                LIMIT %s
+            """, [vector_str, vector_str, threshold, vector_str, limit])
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            
+            for row in cursor.fetchall():
+                # Convert row to dictionary
+                discussion_dict = dict(zip(columns, row))
+                results.append(discussion_dict)
+                
+        return results
+
+    def query_reply_vectors(self, query_vector: List[float], limit: int = 10, threshold: float = 0.5):
+        """
+        Search for replies similar to the given query vector.
+        
+        Args:
+            query_vector (List[float]): The query embedding vector
+            limit (int): Maximum number of results to return
+            threshold (float): Minimum similarity threshold (0-1)
+            
+        Returns:
+            List[Dict]: List of replies with similarity scores
+        """
+        with self.conn.cursor() as cursor:
+            # Format the query vector for pgvector
+            vector_str = self.pgvector_format(query_vector)
+            
+            cursor.execute("""
+                SELECT 
+                    r.id, 
+                    r.text,
+                    r.created_at,
+                    u.username as author,
+                    d.id as discussion_id,
+                    d.title as discussion_title,
+                    CASE 
+                        WHEN d.course_id IS NOT NULL THEN 'course'
+                        ELSE 'learning_journey'
+                    END as context_type,
+                    COALESCE(d.course_id, d.learning_journey_id) as context_id,
+                    COALESCE(c.title, lj.title) as context_title,
+                    1 - (r.embedding <=> %s) as similarity
+                FROM 
+                    replies r
+                JOIN 
+                    users u ON r.user_id = u.id
+                JOIN 
+                    discussions d ON r.discussion_id = d.id
+                LEFT JOIN 
+                    courses c ON d.course_id = c.id
+                LEFT JOIN 
+                    learning_journeys lj ON d.learning_journey_id = lj.id
+                WHERE 
+                    1 - (r.embedding <=> %s) > %s
+                ORDER BY 
+                    r.embedding <=> %s
+                LIMIT %s
+            """, [vector_str, vector_str, threshold, vector_str, limit])
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            
+            for row in cursor.fetchall():
+                # Convert row to dictionary
+                reply_dict = dict(zip(columns, row))
+                results.append(reply_dict)
+                
+        return results
+
+    def query_discussions_and_replies_vectors(self, query_vector: List[float], limit: int = 10, threshold: float = 0.5):
+        """
+        Search for discussions and replies similar to the given query vector.
+        Results are combined and sorted by similarity score.
+        
+        Args:
+            query_vector (List[float]): The query embedding vector
+            limit (int): Maximum number of results to return
+            threshold (float): Minimum similarity threshold (0-1)
+            
+        Returns:
+            List[Dict]: List of discussions and replies with similarity scores and content type
+        """
+        with self.conn.cursor() as cursor:
+            # Format the query vector for pgvector
+            vector_str = self.pgvector_format(query_vector)
+            
+            cursor.execute("""
+                -- Discussions query
+                SELECT 
+                    d.id,
+                    'discussion' as content_type,
+                    d.title as content_title,
+                    d.description as content_text,
+                    d.created_at,
+                    u.username as author,
+                    CASE 
+                        WHEN d.course_id IS NOT NULL THEN 'course'
+                        ELSE 'learning_journey'
+                    END as context_type,
+                    COALESCE(d.course_id, d.learning_journey_id) as context_id,
+                    COALESCE(c.title, lj.title) as context_title,
+                    1 - (d.embedding <=> %s) as similarity
+                FROM 
+                    discussions d
+                JOIN 
+                    users u ON d.user_id = u.id
+                LEFT JOIN 
+                    courses c ON d.course_id = c.id
+                LEFT JOIN 
+                    learning_journeys lj ON d.learning_journey_id = lj.id
+                WHERE 
+                    1 - (d.embedding <=> %s) > %s
+                    
+                UNION ALL
+                
+                -- Replies query
+                SELECT 
+                    r.id,
+                    'reply' as content_type,
+                    d.title as content_title,
+                    r.text as content_text,
+                    r.created_at,
+                    u.username as author,
+                    CASE 
+                        WHEN d.course_id IS NOT NULL THEN 'course'
+                        ELSE 'learning_journey'
+                    END as context_type,
+                    COALESCE(d.course_id, d.learning_journey_id) as context_id,
+                    COALESCE(c.title, lj.title) as context_title,
+                    1 - (r.embedding <=> %s) as similarity
+                FROM 
+                    replies r
+                JOIN 
+                    users u ON r.user_id = u.id
+                JOIN 
+                    discussions d ON r.discussion_id = d.id
+                LEFT JOIN 
+                    courses c ON d.course_id = c.id
+                LEFT JOIN 
+                    learning_journeys lj ON d.learning_journey_id = lj.id
+                WHERE 
+                    1 - (r.embedding <=> %s) > %s
+                    
+                ORDER BY 
+                    similarity DESC
+                LIMIT %s
+            """, [vector_str, vector_str, threshold, vector_str, vector_str, threshold, limit])
+            
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+            
+            for row in cursor.fetchall():
+                # Convert row to dictionary
+                result_dict = dict(zip(columns, row))
+                results.append(result_dict)
+                
+        return results
+    
+    # remove or update for new schema
     def clear_courses(self):
         pass
 
