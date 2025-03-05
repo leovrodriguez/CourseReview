@@ -1,5 +1,5 @@
 from app import create_app
-import logging 
+import logging
 
 app = create_app()
 app.logger.setLevel(logging.INFO)

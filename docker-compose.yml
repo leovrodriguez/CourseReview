@@ -49,6 +49,8 @@ services:
       - PGADMIN_DEFAULT_PASSWORD=admin
     ports:
       - "5050:80"
+    volumes:
+    - pgadmin_data:/var/lib/pgadmin
     depends_on:
       - postgres
 
@@ -59,6 +61,7 @@ services:
     volumes:
       - sql_lite_db:/server/data_layer_api/data
     environment:
+      - DB_IMPLEMENTATION=${DB_IMPLEMENTATION:-sqlite}
       - DB_PATH=${DB_PATH:-/server/data_layer_api/datasemantic_analysis.db}
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -67,9 +70,14 @@ services:
       - DB_NAME=semantic_analysis
       - FLASK_ENV=development
     expose:
-      - 5000
+      - 5003
     ports:
-      - "5000:5000"
+      - "5003:5000"
+    develop:
+      watch:
+        - action: sync
+          path: ./data_layer_api
+          target: /server/data_layer_api
     depends_on:
       postgres:
           condition: service_healthy
@@ -79,3 +87,4 @@ volumes:
   ollama:
   postgres_data:
   sql_lite_db:
+  pgadmin_data:
