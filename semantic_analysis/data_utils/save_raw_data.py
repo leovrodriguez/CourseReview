@@ -1,8 +1,9 @@
 import requests
 import json
 import os
+import subprocess
 from time import sleep
-from .course import COURSERA_DIR
+from .course import COURSERA_DIR, UDEMY_DIR
 from env import FORCE_PARSE
 
 """
@@ -13,8 +14,104 @@ def write_raw_data():
   """
   Saves all raw data to a file in the data directory into a respective sub directory (e.g data/coursera/)
   """
-  save_coursera_raw_data()
-  #TODO: save_udemy_raw_data
+  # save_coursera_raw_data()
+  save_udemy_raw_data()
+
+def save_udemy_raw_data():
+  """
+  Saves raw data from udemy to a file in the data directory: data/udemy/all_entries.json
+
+  NOTE: Udemy web scraping allows us to grab a page by page, so we go until there is an error with the page number or page return is empty
+  """
+  if not FORCE_PARSE:
+     print("Not parsing raw data. Raw data persisted in docker volume. To force a restart run: FORCE_PARSE=true docker-compose up ")
+     return
+
+  # get the pages with the courses
+  courses = get_udemy_pages()
+
+  if courses:
+    print(f"Found {len(courses)} courses from udemy")
+  
+  os.makedirs(UDEMY_DIR, exist_ok=True)
+  with open(os.path.join(UDEMY_DIR, 'all_entries.json'), 'w') as file:
+      json.dump(courses, file, indent=2) 
+      print(f"Wrote raw data to {UDEMY_DIR}/all_entries.json")
+
+def get_udemy_pages():
+    # stores the raw data
+    all_courses = []
+    # page count
+    page_count = 1
+
+    # loop through until there is an error with the page number
+    while True:
+        page_output = None
+        # attempt reading this page ten times
+        for i in range(10):
+            page_output = udemy_curl_page(page_count)
+            if page_output is not None:
+                break
+        if page_output is None:
+            print(f"Failed to get page {page_count}")
+            break
+
+        # direct string check for empty response or empty courses array
+        if '"courses": []' in page_output or '"count": 0' in page_output:
+            print(f"Page {page_count} has no courses")
+            break
+        
+        # parse the page output as JSON
+        try:
+            page_data = json.loads(page_output)
+        except json.JSONDecodeError:
+            print(f"Error decoding JSON on page {page_count}. Exiting.")
+            break
+
+        # extract the courses from the current page
+        courses = page_data.get('courses', [])
+        
+        # append each course from the page to the all_courses list
+        all_courses.extend(courses) 
+
+        # increment page count
+        page_count += 1
+
+    return all_courses
+
+def get_udemy_page_curl_request(page_number):
+    # Define the curl command as a string
+    curl_command = f"""
+        curl --location 'https://www.udemy.com/api-2.0/search-courses/?p={page_number}&src=ukw&q=course&skip_price=true' \
+        --header 'referer: https://www.udemy.com/courses/search/?src=ukw&q=course' \
+        --header 'sec-fetch-dest: empty' \
+        --header 'sec-fetch-mode: cors' \
+        --header 'sec-fetch-site: same-origin' \
+        --header 'x-requested-with: XMLHttpRequest' \
+        --header 'x-udemy-cache-brand: USen_US' \
+        --header 'x-udemy-cache-campaign-code: ST16MT28125BUS' \
+        --header 'x-udemy-cache-device: None' \
+        --header 'x-udemy-cache-language: en' \
+        --header 'x-udemy-cache-logged-in: 0' \
+        --header 'x-udemy-cache-marketplace-country: US' \
+        --header 'x-udemy-cache-price-country: US' \
+        --header 'x-udemy-cache-release: 5da045330fd7fbb83fa0' \
+        --header 'x-udemy-cache-user: ' \
+        --header 'x-udemy-cache-version: 1' \
+        --header 'Cookie: __udmy_2_v57r=74d503e57c964b5da347b203eb1741f3; evi="3@7xBENrVQ8N6AUthfECgZzxYKzYgdC7l0Y3O966YFHoqp8_rjD-Zxzmdx"; ud_rule_vars="eJx1jcsKgzAURH9Fsm2Vm6eYbwmEGK82VBqaRDfivzfQFropzOowZ-YgxaUFC052DzmUmHQvJgkcZe8HJUY5OS76kVUy0l7QmWsf4z0g0Q05DJlDyuXt2skVNJUbwoDJFngLogGqBWipOi6kGsQFQAMYcq2t1VW1xM3fbElunoO3OW7Jo91dCm5cP2sxLe4R_I-U8Llh_vfINWU1HWNKKv59PMn5AoBvR5Q=:1tpIhY:zWkQ2AwMcuIir0NcFxqWo1X3OQj18KcBl1z-FD_eolo"'
+        """
+    return curl_command
+
+def udemy_curl_page(page_number):
+    try:
+        # get the curl command
+        curl_command = get_udemy_page_curl_request(page_number)
+        # Execute the curl command
+        response = subprocess.run(curl_command, shell=True, text=True, capture_output=True)
+        return response.stdout
+    except subprocess.CalledProcessError as e:
+        print("Error getting curl page for page number ", page_number)
+        return None
 
 def save_coursera_raw_data():
   """
@@ -33,7 +130,7 @@ def save_coursera_raw_data():
         "requests": [
           {
             "entityType": "PRODUCTS",
-            "limit": 10000,
+            "limit": 10,
             "maxValuesPerFacet": 1000,
             "facetFilters": [],
             "cursor": "0",
