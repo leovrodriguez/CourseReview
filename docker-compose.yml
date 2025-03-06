@@ -7,6 +7,8 @@ services:
       - raw_course_data:/job/course_data_etl/data
     environment:
       - FORCE_PARSE=${FORCE_PARSE:-false}
+      - AVOID_PARSE_COURSERA=${AVOID_PARSE_COURSERA:-false}
+      - AVOID_PARSE_UDEMY=${AVOID_PARSE_UDEMY:-false}
       - FORCE_INSERT=${FORCE_INSERT:-false}
       - DB_IMPLEMENTATION=${DB_IMPLEMENTATION:-sqlite}
     depends_on:

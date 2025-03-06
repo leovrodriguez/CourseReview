@@ -13,6 +13,7 @@ The service uses several environment variables to control its behavior. These va
 - FORCE_PARSE (default: false):
     - If set to true, the service will force re-parsing of raw data in API calls even if it is already stored in volumes.
     - When false, we expect the raw data API payloads to be stored in the volumes and we will not re-parse that data into Course objects.
+    - AVOID_PARSE_COURSERA and AVOID_PARSE_UDEMY also exist if you want to force parse but avoid one or the other of the platforms.
 
 - FORCE_INSERT (default: false):
     - If set to true, the service will make calls to the data_layer API to insert the Courses into the database.
