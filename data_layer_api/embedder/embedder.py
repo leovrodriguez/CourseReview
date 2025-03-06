@@ -1,6 +1,6 @@
 import requests
 from typing import List
-from data_utils.course import Course
+from classes.course import Course
 
 """
 Embedder module for courses and queries
@@ -8,19 +8,11 @@ Embedder module for courses and queries
 Relies on underlying Ollama API hosted via a docker container
 """
 
-def embed_course_vectors(courses: List[Course]) -> List[List[float]]:
+def embed_course_vector(course: Course) ->List[float]:
     """
-    Return a list of embedded vectors from each course based on relevant fields
+    Return an embedded vectors a course based on relevant semantic fields
     """
-    embeddings: List[List[float]] = []
-    num_courses = len(courses)
-    for course in courses:
-        course_str = course_to_string(course)
-        embeddings.append(get_embedding(course_str))
-        if len(embeddings) % 100 == 0:
-            print(f"Embedded {len(embeddings)} / {num_courses} courses")
-    print(f"Embedded {len(embeddings)} courses")
-    return embeddings
+    return get_embedding(course_to_string(course))
 
 
 def course_to_string(course: Course) -> str:

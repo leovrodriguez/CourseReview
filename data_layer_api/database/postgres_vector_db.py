@@ -997,7 +997,7 @@ class PostgresVectorDB(VectorDB):
     
 
 # Vector Search Queries
-    def query_course_vectors(self, query_vector: List[float], limit: int = 10, threshold: float = 0.5):
+    def query_course_vector(self, query_vector: List[float], limit: int = 10, threshold: float = 0.5):
         """
         Search for courses similar to the given query vector.
         

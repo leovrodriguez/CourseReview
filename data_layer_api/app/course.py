@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from database.db_factory import get_vector_db
 from classes.course import Course
-
+from embedder.embedder import get_embedding, embed_course_vector
 course_bp = Blueprint('course', __name__)
 
 @course_bp.route('/rank', methods=['POST'])
@@ -14,11 +14,11 @@ def insert_course():
     current_app.logger.info("Insert endpoint hit")
     database = get_vector_db() # must be in route handler to avoid thread failure
     payload = request.get_json()
-    current_app.logger.info(f"{payload}")
     course_dict = payload["course"]
-    course_vector = payload["course_vector"]
+    course = Course.dict_to_course(course_dict)
+    course_vector = embed_course_vector(course)
     
-    database.insert_course(Course.dict_to_course(course_dict), course_vector)
+    database.insert_course(course, course_vector)
     database.close()
     return jsonify({"message": "Course Upload Endpoint"})
 
@@ -26,9 +26,10 @@ def insert_course():
 def query_course():
     database = get_vector_db()
     payload = request.get_json()
-    vector = payload["query_vector"]
     limit = payload["limit"]
-    courses = database.query_course_vector(vector, limit)
+    query = payload["query"]
+    query_vector = get_embedding(query)
+    courses = database.query_course_vector(query_vector, limit)
     database.close()
     return jsonify({"courses": courses})
 

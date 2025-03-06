@@ -22,9 +22,6 @@ def save_coursera_raw_data():
 
   NOTE: Coursera web scraping allows us to grab 10000 courses so we only need to make one request to get all courses. Other platforms can vary.
   """
-  if not FORCE_PARSE:
-     print("Not parsing raw data. Raw data persisted in docker volume. To force a restart run: FORCE_PARSE=true docker-compose up ")
-     return
 
   payload = json.dumps([
     {
