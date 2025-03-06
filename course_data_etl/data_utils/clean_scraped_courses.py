@@ -1,6 +1,6 @@
 from .course import Course
 from .course import CourseWebsite
-from .course import COURSERA_DIR
+from .course import COURSERA_DIR, UDEMY_DIR
 from typing import List
 import json
 import os
@@ -19,6 +19,7 @@ def normalized_courses() -> List[Course]:
 
     courses: List[Course] = []
 
+    # parse coursera courses
     for filename in os.listdir(COURSERA_DIR):
         print(f"Reading coursera file: {filename}")
         if filename.endswith('.json'):
@@ -26,11 +27,55 @@ def normalized_courses() -> List[Course]:
             with open(path) as file:
                 raw_data = json.load(file)
                 courses.extend(parse_coursera_courses(raw_data, CourseWebsite.COURSERA))
+    
+    # then parse udemy courses
+    for filename in os.listdir(UDEMY_DIR):
+        print(f"Reading udemy file: {filename}")
+        if filename.endswith('.json'):
+            path = os.path.join(UDEMY_DIR, filename)
+            with open(path) as file:
+                raw_data = json.load(file)
+                courses.extend(parse_udemy_courses(raw_data, CourseWebsite.UDEMY))
 
     print(f"Normalized {len(courses)} total courses from raw json format")
     return courses
 
-#TODO: Add udemy course logic 
+def parse_udemy_courses(raw_data, course_website: CourseWebsite) -> List[Course]:
+    """
+    Parse raw coursera data into a list of Course objects
+    """
+    courses: List[Course] = []
+    
+    raw_courses = raw_data
+
+    if not raw_courses:
+        print("No udemy courses found")
+
+    for course in raw_courses:
+        name = course.get("title", "N/A")
+        authors = [instructor["display_name"] for instructor in course.get("visible_instructors", [])]
+        description = course.get("headline", "No description available")
+        skills = course.get("objectives_summary", [])
+        rating = course.get("rating", 0.0)
+        num_ratings = course.get("num_reviews", 0)
+        image_url = course.get("image_480x270", "")
+        is_free = not course.get("is_paid", False)
+        url = "https://www.udemy.com" + course.get("url", "")
+
+        course = Course(
+            original_website=course_website,
+            name=name,
+            authors=authors,
+            description=description,
+            skills=skills,
+            rating=rating,
+            num_ratings=num_ratings,
+            image_url=image_url,
+            is_free=is_free,
+            url=url
+        )
+        courses.append(course)
+    return courses
 
 def parse_coursera_courses(raw_data, course_website: CourseWebsite) -> List[Course]:
     """
