@@ -1,5 +1,6 @@
 FROM python:3.11
 WORKDIR /job
+ENV PYTHONUNBUFFERED=1
 
 COPY course_data_etl/requirements.txt course_data_etl/requirements.txt
 RUN pip install -r course_data_etl/requirements.txt

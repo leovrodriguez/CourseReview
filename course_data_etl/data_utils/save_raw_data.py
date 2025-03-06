@@ -4,7 +4,7 @@ import os
 import subprocess
 from time import sleep
 from .course import COURSERA_DIR, UDEMY_DIR
-from env import FORCE_PARSE
+from env import AVOID_PARSE_COURSERA, AVOID_PARSE_UDEMY
 
 """
 Core logic for web scraping. Makes requests to exposed apis and saves raw data to a file.
@@ -14,7 +14,7 @@ def write_raw_data():
   """
   Saves all raw data to a file in the data directory into a respective sub directory (e.g data/coursera/)
   """
-  # save_coursera_raw_data()
+  save_coursera_raw_data()
   save_udemy_raw_data()
 
 def save_udemy_raw_data():
@@ -23,9 +23,10 @@ def save_udemy_raw_data():
 
   NOTE: Udemy web scraping allows us to grab a page by page, so we go until there is an error with the page number or page return is empty
   """
-  if not FORCE_PARSE:
-     print("Not parsing raw data. Raw data persisted in docker volume. To force a restart run: FORCE_PARSE=true docker-compose up ")
-     return
+
+  if AVOID_PARSE_UDEMY: 
+    "Avoiding parsing udemy, see flag description in ReadMe if this is not expected"
+    return
 
   # get the pages with the courses
   courses = get_udemy_pages()
@@ -44,8 +45,8 @@ def get_udemy_pages():
     # page count
     page_count = 1
 
-    # loop through until there is an error with the page number
-    while True:
+    # loop through until age 500, pages repeat themselves after 500
+    while page_count <= 500: 
         page_output = None
         # attempt reading this page ten times
         for i in range(10):
@@ -66,6 +67,7 @@ def get_udemy_pages():
             page_data = json.loads(page_output)
         except json.JSONDecodeError:
             print(f"Error decoding JSON on page {page_count}. Exiting.")
+            print(page_output)
             break
 
         # extract the courses from the current page
@@ -74,6 +76,7 @@ def get_udemy_pages():
         # append each course from the page to the all_courses list
         all_courses.extend(courses) 
 
+        if page_count%10==0: print(f"Scraped page {page_count} from Udemy API")
         # increment page count
         page_count += 1
 
@@ -120,6 +123,10 @@ def save_coursera_raw_data():
   NOTE: Coursera web scraping allows us to grab 10000 courses so we only need to make one request to get all courses. Other platforms can vary.
   """
 
+  if AVOID_PARSE_COURSERA: 
+    "Avoiding parsing coursera, see flag description in ReadMe if this is not expected"
+    return
+
   payload = json.dumps([
     {
       "operationName": "Search",
@@ -127,6 +134,7 @@ def save_coursera_raw_data():
         "requests": [
           {
             "entityType": "PRODUCTS",
+            #"limit": 10000 # on real runs should be 10000
             "limit": 10,
             "maxValuesPerFacet": 1000,
             "facetFilters": [],
