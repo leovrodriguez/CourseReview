@@ -7,13 +7,14 @@
 flowchart TD
     A@{ shape: cyl, label: "Database" }
     B(Front End)
-    C(Data Layer API 
-        )
+    C(Data Layer API )
     D(Course Data ETL)
+    E(Ollama Embedder)
 
     B <-- retrieve and post user data -----> C
     D -.manual job runs to store platform course data....-> C
     C <---> A
+    C ---> E
 ```
 
 See ReadMe files in each service for more information on how to run and develop each service.
