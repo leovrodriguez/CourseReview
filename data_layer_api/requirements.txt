@@ -3,3 +3,5 @@ werkzeug==2.0.3
 sqlite-vec==0.1.7-alpha.2
 psycopg2-binary>=2.9.9
 types-psycopg2
+requests
+types-requests

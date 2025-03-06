@@ -9,14 +9,14 @@ flowchart TD
     B(Front End)
     C(Data Layer API 
         )
-    D(Semantic Analysis Job)
+    D(Course Data ETL)
 
     B <-- retrieve and post user data -----> C
-    D -.manual runs to store platform course data....-> C
+    D -.manual job runs to store platform course data....-> C
     C <---> A
 ```
 
-
+See ReadMe files in each service for more information on how to run and develop each service.
 
  ## Running Docker Containers
 if modifying dependencies:

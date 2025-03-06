@@ -1,13 +1,13 @@
 services:
-  semantic_analysis:
+  course_data_etl:
     build:
       context: .
-      dockerfile: semantic_analysis/Dockerfile
+      dockerfile: course_data_etl/Dockerfile
     volumes:
-      - raw_course_data:/job/semantic_analysis/data
+      - raw_course_data:/job/course_data_etl/data
     environment:
       - FORCE_PARSE=${FORCE_PARSE:-false}
-      - FORCE_EMBED=${FORCE_EMBED:-false}
+      - FORCE_INSERT=${FORCE_INSERT:-false}
       - DB_IMPLEMENTATION=${DB_IMPLEMENTATION:-sqlite}
     depends_on:
       - ollama
@@ -29,7 +29,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=semantic_analysis
+      - POSTGRES_DB=course_data_etl
     ports:
       - "5432:5432"
     volumes: 
@@ -59,15 +59,15 @@ services:
       context: .
       dockerfile: data_layer_api/Dockerfile
     volumes:
-      - sql_lite_db:/server/data_layer_api/data
+      - sql_lite_db:/server/data_layer_api/database
     environment:
       - DB_IMPLEMENTATION=${DB_IMPLEMENTATION:-sqlite}
-      - DB_PATH=${DB_PATH:-/server/data_layer_api/datasemantic_analysis.db}
+      - DB_PATH=${DB_PATH:-/server/data_layer_api/database/vectors.db}
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - DB_NAME=semantic_analysis
+      - DB_NAME=course_data_etl
       - FLASK_ENV=development
     expose:
       - 5003

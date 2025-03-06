@@ -1,4 +1,3 @@
-# semantic_analysis/vector_db.py
 from abc import ABC, abstractmethod
 from typing import List
 from classes.course import Course

@@ -1,9 +1,10 @@
 from data_utils.course import Course
-from typing import List
-from course_embedder.embedder import embed_course_vectors, get_embedding
-from env import FORCE_EMBED
-import requests
+from env import FORCE_INSERT, FORCE_PARSE
 from dataclasses import asdict
+from data_utils.save_raw_data import write_raw_data
+from data_utils.clean_scraped_courses import normalized_courses
+import requests
+from typing import List
 import json
 
 
@@ -30,25 +31,28 @@ DATA_LAYER_API_COURSE_INSERTION = f"{DATA_LAYER_API}/course/insert"
 DATA_LAYER_API_COURSE_CLEAR = f"{DATA_LAYER_API}/course/clear"
 DATA_LAYER_API_QUERY_COURSE = f"{DATA_LAYER_API}/course/query"
 
-def test_queries(courses: List[Course], queries: List[str] = example_queries):
+def test_queries(queries: List[str] = example_queries):
+
+    if not FORCE_PARSE:
+        print("Not making API call and parsing raw data. Raw data persisted in docker volume. To force a restart run: FORCE_PARSE=true docker-compose up ")
+    else:
+        write_raw_data()
     
-    # Embed courses and store them in vector_db
-    if FORCE_EMBED: 
-        print("Forcing re-embedding of courses in data directory")
+    # Insert courses into database via data layer api
+    if FORCE_INSERT: 
+        print("Inserting courses into data layer api")
         clear_request_result = requests.post(DATA_LAYER_API_COURSE_CLEAR)
         clear_request_result.raise_for_status()
-        embedded_course_vectors: List[List[float]] = embed_course_vectors(courses)
-        for course,course_vector in zip(courses,embedded_course_vectors):
-            payload = {"course": asdict(course), "course_vector": course_vector}
+        for course in normalized_courses():
+            payload = {"course": asdict(course)}
             insert_request_result = requests.post(DATA_LAYER_API_COURSE_INSERTION, json = payload)
             insert_request_result.raise_for_status()
-            print("Sucessfully uploaded course via data layer API")
-
     
-    #Embed queries and query vector_db
-    embedded_queries = [get_embedding(query) for query in queries]
-    for query, query_vector in zip(queries, embedded_queries):
-        query_post_result = requests.post(DATA_LAYER_API_QUERY_COURSE, json = {"query_vector": query_vector, "limit": 3})
+        print("Sucessfully uploaded courses via data layer API")
+
+    #Query database
+    for query in queries:
+        query_post_result = requests.post(DATA_LAYER_API_QUERY_COURSE, json = {"query": query, "limit": 3})
         query_post_result.raise_for_status()
         similar_courses = query_post_result.json().get("courses", [])
         if not similar_courses:

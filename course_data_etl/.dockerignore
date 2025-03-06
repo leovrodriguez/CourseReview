@@ -1,2 +1,2 @@
 # Don't upload scraped data
-semantic_analysis/data/*
+course_data_etl/data/*
