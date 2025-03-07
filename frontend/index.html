@@ -23,8 +23,20 @@
         fetch('all_entries.json')
             .then(response => response.json())
             .then(data => {
-                console.log("JSON Loaded:", data); // Debugging
-                courses = data;
+                console.log("Full JSON Loaded:", JSON.stringify(data, null, 2)); // Log full JSON structure
+                
+                // Extract course data
+                if (data.data) {
+                    console.log("Inside 'data':", JSON.stringify(data.data, null, 2));
+
+                    if (data.data.SearchResult) {
+                        console.log("Inside 'SearchResult':", JSON.stringify(data.data.SearchResult, null, 2));
+
+                        if (data.data.SearchResult.search) {
+                            console.log("Inside 'search':", JSON.stringify(data.data.SearchResult.search, null, 2));
+                        }
+                    }
+                }
             })
             .catch(error => console.error('Error loading JSON:', error));
 
@@ -37,10 +49,8 @@
             if (query.length < 2) return; // Ignore very short queries
 
             let filtered = courses.filter(course => {
-                let courseName = course.name ? course.name.toLowerCase() : ""; // Check if name exists
-                let courseDescription = course.description ? course.description.toLowerCase() : ""; // Check if description exists
-
-                return courseName.includes(query) || courseDescription.includes(query);
+                let courseName = course.name ? course.name.toLowerCase() : "";
+                return courseName.includes(query);
             });
 
             console.log("Filtered Results:", filtered); // Debugging
@@ -51,12 +61,17 @@
                 filtered.forEach(course => {
                     let div = document.createElement('div');
                     div.className = 'course';
-                    div.innerHTML = `<strong>${course.name || "No Name Available"}</strong><br>${course.description || "No description available"}`;
+                    div.innerHTML = `
+                        <strong>${course.name}</strong><br>
+                        <img src="${course.imageUrl}" alt="${course.name}" style="max-width: 200px;"><br>
+                        <a href="https://www.coursera.org${course.url}" target="_blank">View Course</a><br>
+                        <p>Rating: ${course.avgProductRating ? course.avgProductRating.toFixed(2) : "N/A"} ⭐</p>
+                    `;
                     resultsDiv.appendChild(div);
                 });
             }
         }
-        
+
     </script>
 
 </body>
