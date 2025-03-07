@@ -19,12 +19,16 @@ def course_to_string(course: Course) -> str:
     """
     Parses relevant fields from course object to a string for embedding
     """
+    authors_string = ", ".join(course.authors)
+    course_skills_string = ", ".join(course.skills)
     parts = [
-        course.name,
-        " ".join(course.authors),
-        " ".join(course.skills),
-        course.description or ""
+        f"This educational course is named {course.name}",
+        f"The authors of {course.name} are {authors_string} ",
+        f"The skills to be learned in this course are {course_skills_string}",
     ]
+    if course.description:
+        parts.append(f"A description of this course is: {course.description}")
+    
     return " ".join(parts)    
 
 

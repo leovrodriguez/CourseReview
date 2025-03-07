@@ -81,5 +81,5 @@ class Course:
 class CourseReview:
     user_id: UUID
     course_id: UUID
-    rating: float
+    rating: int
     description: Optional[str] = None
