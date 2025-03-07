@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import List, Optional
 from dataclasses import dataclass
+from uuid import UUID
 
 class CourseWebsite(str, Enum):
     """
@@ -75,3 +76,10 @@ class Course:
             is_free=bool(course_dict.get('is_free', False)),
             url=course_dict.get('url', '')
         )
+    
+@dataclass
+class CourseReview:
+    user_id: UUID
+    course_id: UUID
+    rating: int
+    description: Optional[str] = None

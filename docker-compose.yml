@@ -10,9 +10,7 @@ services:
       - AVOID_PARSE_COURSERA=${AVOID_PARSE_COURSERA:-false}
       - AVOID_PARSE_UDEMY=${AVOID_PARSE_UDEMY:-false}
       - FORCE_INSERT=${FORCE_INSERT:-false}
-      - DB_IMPLEMENTATION=${DB_IMPLEMENTATION:-sqlite}
     depends_on:
-      - ollama
       - data_layer_api
 
   ollama:
@@ -61,7 +59,7 @@ services:
       context: .
       dockerfile: data_layer_api/Dockerfile
     volumes:
-      - sql_lite_db:/server/data_layer_api/database
+      - sql_lite_db:/server/data_layer_api/database/vectors.db
     environment:
       - DB_IMPLEMENTATION=${DB_IMPLEMENTATION:-sqlite}
       - DB_PATH=${DB_PATH:-/server/data_layer_api/database/vectors.db}
@@ -82,7 +80,9 @@ services:
           target: /server/data_layer_api
     depends_on:
       postgres:
-          condition: service_healthy
+        condition: service_healthy
+      ollama:
+        condition: service_started
 
 volumes:
   raw_course_data:

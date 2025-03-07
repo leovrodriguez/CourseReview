@@ -1,10 +1,11 @@
 import psycopg2
-from typing import List
+from typing import List, Optional
 from database.vector_db import VectorDB
 from env import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
+from uuid import UUID
 
 # Import the dataclasses
-from classes.course import Course
+from classes.course import Course, CourseReview
 from classes.user import User
 from classes.learning_journey import LearningJourney, LearningJourneyCourse
 from classes.discussion import Discussion
@@ -65,6 +66,17 @@ class PostgresVectorDB(VectorDB):
                 UNIQUE (platform, url)
             );
 
+            -- User review table
+            CREATE TABLE IF NOT EXISTS course_reviews (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+                rating INT CHECK (rating >= 0 AND rating <= 5) NOT NULL, 
+                description TEXT, -- Optional review text
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (user_id, course_id) -- Ensures a user can only review a course once
+            );               
+
             -- Learning Journeys Table
             CREATE TABLE IF NOT EXISTS learning_journeys (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -114,7 +126,7 @@ class PostgresVectorDB(VectorDB):
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 object_id UUID NOT NULL,
-                object_type TEXT NOT NULL CHECK (object_type IN ('course', 'learning_journey', 'discussion', 'reply')), 
+                object_type TEXT NOT NULL CHECK (object_type IN ('learning_journey', 'discussion', 'reply')), 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE (user_id, object_id, object_type)
             );
@@ -297,6 +309,53 @@ class PostgresVectorDB(VectorDB):
             self.conn.commit()
             
         return rows_deleted > 0
+    
+
+    def insert_course_review(self, review: CourseReview):
+        """
+        Insert or update a course review in the course_reviews table.
+        
+        Args:
+            review (CourseReview): The CourseReview object containing review details.
+            
+        Returns:
+            UUID: The ID of the inserted or updated review.
+        """
+        with self.conn.cursor() as cursor:
+            # Ensure rating is within valid range
+            if review.rating < 0 or review.rating > 5:
+                raise ValueError("Rating must be between 0 and 5")
+
+            # Check if the user has already reviewed the course
+            cursor.execute(
+                "SELECT id FROM course_reviews WHERE user_id = %s AND course_id = %s",
+                [review.user_id, review.course_id]
+            )
+            existing_review = cursor.fetchone()
+
+            if existing_review:
+                # If review exists, update it
+                cursor.execute("""
+                    UPDATE course_reviews
+                    SET rating = %s, description = %s, created_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                    RETURNING id
+                """, [review.rating, review.description, existing_review[0]])
+
+                review_id = cursor.fetchone()[0]
+            else:
+                # Insert new review
+                cursor.execute("""
+                    INSERT INTO course_reviews (user_id, course_id, rating, description)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING id
+                """, [review.user_id, review.course_id, review.rating, review.description])
+
+                review_id = cursor.fetchone()[0]
+
+            self.conn.commit()
+
+        return review_id
 
 
 # Learning Journey Queries
@@ -997,7 +1056,7 @@ class PostgresVectorDB(VectorDB):
     
 
 # Vector Search Queries
-    def query_course_vector(self, query_vector: List[float], limit: int = 10, threshold: float = 0.5):
+    def query_course_vector(self, query_vector: List[float], limit: int = 10, threshold: float = 0.5, similarity_weight: float = .7):
         """
         Search for courses similar to the given query vector.
         
@@ -1014,27 +1073,52 @@ class PostgresVectorDB(VectorDB):
             vector_str = self.pgvector_format(query_vector)
             
             cursor.execute("""
+                WITH review_ratings AS (
+                    SELECT r.course_id, AVG(r.rating) AS avg_rating, COUNT(r.id) AS num_reviews 
+                    FROM course_reviews r 
+                    GROUP BY r.course_id
+                ),
+                similar_courses AS (
+                    SELECT 
+                        c.id, c.title, c.description, c.platform, c.authors, c.skills, c.rating, 
+                        c.num_ratings, c.image_url, c.is_free, c.url,
+                        rr.avg_rating AS course_review_rating,
+                        rr.num_reviews AS course_review_rating_num,
+                        c.rating AS original_website_rating,
+                        c.num_ratings AS original_website_num_ratings,
+                        1 - (c.embedding <=> %s) as similarity,
+                        COALESCE(rr.avg_rating, c.rating) AS merged_rating,
+                        COALESCE(rr.num_reviews, c.num_ratings) AS merged_num_ratings
+                    FROM courses c
+                    LEFT JOIN review_ratings rr ON c.id = rr.course_id
+                    WHERE 1 - (c.embedding <=> %s) > %s
+                    ORDER BY similarity DESC
+                    LIMIT %s
+                ),
+                normalized_courses AS (
+                    SELECT 
+                        *,
+                        merged_rating / 5 AS norm_rating,
+                        -- Normalize the log of review counts
+                        LOG(1 + merged_num_ratings) / LOG(1 + MAX(merged_num_ratings) OVER ()) AS norm_reviews,
+                        -- Calculate normalized effective rating (0-1 range)
+                        (merged_rating / 5) * (LOG(1 + merged_num_ratings) / LOG(1 + MAX(merged_num_ratings) OVER ())) AS normalized_effective_rating
+                    FROM similar_courses
+                )
                 SELECT 
-                    c.id, 
-                    c.title, 
-                    c.description,
-                    c.platform,
-                    c.authors,
-                    c.skills,
-                    c.rating,
-                    c.num_ratings,
-                    c.image_url,
-                    c.is_free,
-                    c.url,
-                    1 - (c.embedding <=> %s) as similarity
-                FROM 
-                    courses c
-                WHERE 
-                    1 - (c.embedding <=> %s) > %s
-                ORDER BY 
-                    c.embedding <=> %s
+                    id, title, description, platform, authors, skills, image_url, is_free, url,
+                    course_review_rating, course_review_rating_num,
+                    original_website_rating, original_website_num_ratings, 
+                    merged_rating AS rating_used_for_query, merged_num_ratings AS num_ratings_used_for_query,
+                    -- Ordering related fields at the end
+                    similarity, norm_rating, norm_reviews, normalized_effective_rating,
+                    %s * similarity + (1-%s) * normalized_effective_rating AS custom_ranking
+                FROM normalized_courses
+                ORDER BY custom_ranking DESC
                 LIMIT %s
-            """, [vector_str, vector_str, threshold, vector_str, limit])
+            """, [vector_str, vector_str, threshold, limit * 2, similarity_weight, similarity_weight, limit])
+
+
             
             columns = [desc[0] for desc in cursor.description]
             results = []

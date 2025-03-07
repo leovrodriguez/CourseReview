@@ -1,3 +1,67 @@
 # Data Layer API
 
-Initial structure of middleware API to handle requests from the front-end and interact with the database.
+The data layer handles the storage and retrieval of data. It is responsible for the following:
+
+1. Listening at endpoints in order to perform all relevant database operations
+2. Embedding any data that should be vectorized
+
+## Database Operations
+
+#### Query Courses
+
+For a query vector $q$ and a course vector $c$, the ranking score is calculated as:
+
+$$\text{Score} = w_s \times \text{Similarity}(q, c) + (1 - w_s) \times \text{NormalizedEffectiveRating}(c)$$
+
+Where:
+
+- $w_s$ is the similarity weight (default: 0.7)
+- $\text{Similarity}(q, c)$ is the cosine similarity between query and course vectors (range: 0-1)
+- $\text{NormalizedEffectiveRating}(c)$ is calculated as:
+
+$$\text{NormalizedEffectiveRating}(c) = \frac{\text{rating}}{5} \times \frac{\log(1 + \text{numRatings})}{\log(1 + \text{maxNumRatings})}$$
+
+This formula balances the semantic relevance of search results with their quality and popularity, ensuring that users find both relevant and reputable courses. We make use of the following parameters to fine tune the formula as we learn more about the data and user preferences.
+
+#### Parameters
+
+- **threshold**: Minimum similarity score for inclusion in results (default: 0.5)
+- **limit**: Maximum number of results to return (default: 10)
+- **similarity_weight**: Weight given to vector similarity vs. rating (default: 0.7)
+
+## Flags
+
+The Data Layer API can be configured through various environment variables that modify its behavior. These flags can be set in the `docker-compose.yml` file or provided at runtime.
+
+### Database Configuration
+
+- **DB_IMPLEMENTATION**: Selects the database backend to use
+  - `sqlite` (default): Uses SQLite with vector extensions for local development
+  - `postgres`: Uses PostgreSQL with pgvector for production deployments
+
+- **DB_PATH**: Path to the SQLite database file (only used when `DB_IMPLEMENTATION=sqlite`)
+  - Default: `/server/data_layer_api/database/vectors.db`
+  - Not likely to be changed as we move away from our proof of concept SQLite test database and towards testing a more robust PostgreSQL database
+
+#### PostgreSQL Connection Parameters
+
+When using PostgreSQL (`DB_IMPLEMENTATION=postgres`), the following connection parameters are defaulted:
+
+- **DB_HOST**: PostgreSQL server hostname (default: `postgres`)
+- **DB_PORT**: PostgreSQL server port (default: `5432`)
+- **DB_USER**: PostgreSQL username (default: `postgres`)
+- **DB_PASSWORD**: PostgreSQL password (default: `postgres`)
+- **DB_NAME**: PostgreSQL database name (default: `course_data_etl`)
+
+
+##### Example Usage
+
+To start the service with SQLite (also defualt behavior so can be omitted):
+```bash
+DB_IMPLEMENTATION=sqlite docker-compose up data_layer_api
+```
+
+To start the service with PostgreSQL:
+```bash
+DB_IMPLEMENTATION=postgres docker-compose up data_layer_api
+```

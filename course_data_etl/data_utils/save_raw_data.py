@@ -46,7 +46,8 @@ def get_udemy_pages():
     page_count = 1
 
     # loop through until age 500, pages repeat themselves after 500
-    while page_count <= 500: 
+    while page_count <= 1: #for testing with small amounts of data
+    #while page_count <= 500: #production behavior
         page_output = None
         # attempt reading this page ten times
         for i in range(10):
@@ -134,7 +135,7 @@ def save_coursera_raw_data():
         "requests": [
           {
             "entityType": "PRODUCTS",
-            #"limit": 10000 # on real runs should be 10000
+            #"limit": 10000, # on production runs should be 10000
             "limit": 10,
             "maxValuesPerFacet": 1000,
             "facetFilters": [],
