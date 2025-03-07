@@ -23,24 +23,41 @@
         fetch('all_entries.json')
             .then(response => response.json())
             .then(data => {
-                console.log("Full JSON Loaded:", JSON.stringify(data, null, 2)); // Log full JSON structure
-                
-                // Extract course data
-                if (data.data) {
-                    console.log("Inside 'data':", JSON.stringify(data.data, null, 2));
+                console.log("✅ Full JSON Loaded:", JSON.stringify(data, null, 2)); // Log the full JSON
 
-                    if (data.data.SearchResult) {
-                        console.log("Inside 'SearchResult':", JSON.stringify(data.data.SearchResult, null, 2));
+                // Ensure `data` is extracted from the array correctly
+                if (Array.isArray(data) && data.length > 0) {
+                    data = data[0]; // Extract the first object from the array
+                } else {
+                    console.error("❌ JSON is not in the expected array format!");
+                    console.log("🔍 Data received:", JSON.stringify(data, null, 2));
+                    return;
+                }
 
-                        if (data.data.SearchResult.search) {
-                            console.log("Inside 'search':", JSON.stringify(data.data.SearchResult.search, null, 2));
+                if (data?.data?.SearchResult?.search) {
+                    let extractedCourses = [];
+
+                    // Loop through each search entry and extract `elements`
+                    data.data.SearchResult.search.forEach((item, index) => {
+                        if (item?.elements) {
+                            extractedCourses.push(...item.elements);
+                        } else {
+                            console.warn(`⚠️ Warning: Missing 'elements' in search index ${index}`, item);
                         }
-                    }
+                    });
+
+                    courses = extractedCourses;
+                    console.log("✅ Extracted Courses:", courses);
+                } else {
+                    console.error("❌ Unexpected JSON structure! Check the data format.");
+                    console.log("🔍 Data received:", JSON.stringify(data, null, 2)); // Show full JSON
+                    courses = [];
                 }
             })
-            .catch(error => console.error('Error loading JSON:', error));
+            .catch(error => console.error('❌ Error loading JSON:', error));
 
 
+        // Search courses function
         function searchCourses() {
             let query = document.getElementById('searchInput').value.toLowerCase();
             let resultsDiv = document.getElementById('results');
@@ -48,12 +65,25 @@
 
             if (query.length < 2) return; // Ignore very short queries
 
+            if (!courses || courses.length === 0) {
+                console.error("❌ No courses available to search! Check JSON extraction.");
+                return;
+            }
+
+            console.log("🔎 Searching for:", query);
+            console.log("📦 Total Courses Available:", courses.length);
+
             let filtered = courses.filter(course => {
-                let courseName = course.name ? course.name.toLowerCase() : "";
+                if (!course || !course.name) {
+                    console.warn("⚠️ Skipping invalid course object:", course);
+                    return false;
+                }
+
+                let courseName = course.name.toLowerCase();
                 return courseName.includes(query);
             });
 
-            console.log("Filtered Results:", filtered); // Debugging
+            console.log("✅ Filtered Results:", filtered);
 
             if (filtered.length === 0) {
                 resultsDiv.innerHTML = "<p>No results found</p>";
@@ -63,7 +93,7 @@
                     div.className = 'course';
                     div.innerHTML = `
                         <strong>${course.name}</strong><br>
-                        <img src="${course.imageUrl}" alt="${course.name}" style="max-width: 200px;"><br>
+                        <img src="${course.imageUrl || ''}" alt="${course.name}" style="max-width: 200px;"><br>
                         <a href="https://www.coursera.org${course.url}" target="_blank">View Course</a><br>
                         <p>Rating: ${course.avgProductRating ? course.avgProductRating.toFixed(2) : "N/A"} ⭐</p>
                     `;
@@ -71,6 +101,7 @@
                 });
             }
         }
+
 
     </script>
 
