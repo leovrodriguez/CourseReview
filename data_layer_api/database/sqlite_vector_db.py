@@ -4,7 +4,7 @@ from typing import List
 import struct
 from .vector_db import VectorDB
 import json
-from classes.course import Course
+from classes.course import Course, CourseReview
 
 def serialize_f32(vector: List[float]) -> bytes:
     """Serializes a list of floats into a compact "raw bytes" format"""
@@ -108,6 +108,9 @@ class SQLiteVectorDB(VectorDB):
         """
         rows = self.db.execute(sql_query, [query_str]).fetchall()
         return [dict(tuple_entry) for tuple_entry in rows]
+
+    def insert_course_review(self, course_review: CourseReview):
+        pass
 
     def clear_courses(self):
         with self.db:

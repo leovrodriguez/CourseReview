@@ -1,10 +1,11 @@
 import psycopg2
-from typing import List
+from typing import List, Optional
 from database.vector_db import VectorDB
 from env import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
+from uuid import UUID
 
 # Import the dataclasses
-from classes.course import Course
+from classes.course import Course, CourseReview
 from classes.user import User
 from classes.learning_journey import LearningJourney, LearningJourneyCourse
 from classes.discussion import Discussion
@@ -65,6 +66,17 @@ class PostgresVectorDB(VectorDB):
                 UNIQUE (platform, url)
             );
 
+            -- User review table
+            CREATE TABLE IF NOT EXISTS course_reviews (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+                rating FLOAT CHECK (rating >= 0 AND rating <= 5) NOT NULL,
+                description TEXT, -- Optional review text
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE (user_id, course_id) -- Ensures a user can only review a course once
+            );               
+
             -- Learning Journeys Table
             CREATE TABLE IF NOT EXISTS learning_journeys (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -114,7 +126,7 @@ class PostgresVectorDB(VectorDB):
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 object_id UUID NOT NULL,
-                object_type TEXT NOT NULL CHECK (object_type IN ('course', 'learning_journey', 'discussion', 'reply')), 
+                object_type TEXT NOT NULL CHECK (object_type IN ('learning_journey', 'discussion', 'reply')), 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE (user_id, object_id, object_type)
             );
@@ -297,6 +309,53 @@ class PostgresVectorDB(VectorDB):
             self.conn.commit()
             
         return rows_deleted > 0
+    
+
+    def insert_course_review(self, review: CourseReview):
+        """
+        Insert or update a course review in the course_reviews table.
+        
+        Args:
+            review (CourseReview): The CourseReview object containing review details.
+            
+        Returns:
+            UUID: The ID of the inserted or updated review.
+        """
+        with self.conn.cursor() as cursor:
+            # Ensure rating is within valid range
+            if review.rating < 0 or review.rating > 5:
+                raise ValueError("Rating must be between 0 and 5")
+
+            # Check if the user has already reviewed the course
+            cursor.execute(
+                "SELECT id FROM course_reviews WHERE user_id = %s AND course_id = %s",
+                [review.user_id, review.course_id]
+            )
+            existing_review = cursor.fetchone()
+
+            if existing_review:
+                # If review exists, update it
+                cursor.execute("""
+                    UPDATE course_reviews
+                    SET rating = %s, description = %s, created_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                    RETURNING id
+                """, [review.rating, review.description, existing_review[0]])
+
+                review_id = cursor.fetchone()[0]
+            else:
+                # Insert new review
+                cursor.execute("""
+                    INSERT INTO course_reviews (user_id, course_id, rating, description)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING id
+                """, [review.user_id, review.course_id, review.rating, review.description])
+
+                review_id = cursor.fetchone()[0]
+
+            self.conn.commit()
+
+        return review_id
 
 
 # Learning Journey Queries

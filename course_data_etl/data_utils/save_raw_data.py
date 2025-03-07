@@ -46,7 +46,8 @@ def get_udemy_pages():
     page_count = 1
 
     # loop through until age 500, pages repeat themselves after 500
-    while page_count <= 500: 
+    #while page_count <= 500: #production behavior
+    while page_count <= 1: #for testing with small amounts of data
         page_output = None
         # attempt reading this page ten times
         for i in range(10):
