@@ -19,43 +19,35 @@
     <script>
         let courses = [];
 
-        // Load the JSON file from the frontend folder
-        fetch('all_entries.json')
+        /*
+        fetch('http://data_layer_api:5000/api/courses')  // Replaced static JSON with API / backend service
             .then(response => response.json())
             .then(data => {
-                console.log("✅ Full JSON Loaded:", JSON.stringify(data, null, 2)); // Log the full JSON
+                console.log("✅ API Response:", JSON.stringify(data, null, 2));
 
-                // Ensure `data` is extracted from the array correctly
                 if (Array.isArray(data) && data.length > 0) {
-                    data = data[0]; // Extract the first object from the array
-                } else {
-                    console.error("❌ JSON is not in the expected array format!");
-                    console.log("🔍 Data received:", JSON.stringify(data, null, 2));
-                    return;
-                }
-
-                if (data?.data?.SearchResult?.search) {
-                    let extractedCourses = [];
-
-                    // Loop through each search entry and extract `elements`
-                    data.data.SearchResult.search.forEach((item, index) => {
-                        if (item?.elements) {
-                            extractedCourses.push(...item.elements);
-                        } else {
-                            console.warn(`⚠️ Warning: Missing 'elements' in search index ${index}`, item);
-                        }
-                    });
-
-                    courses = extractedCourses;
+                    courses = data;  // Directly assign API response as course data
                     console.log("✅ Extracted Courses:", courses);
                 } else {
-                    console.error("❌ Unexpected JSON structure! Check the data format.");
-                    console.log("🔍 Data received:", JSON.stringify(data, null, 2)); // Show full JSON
+                    console.error("❌ API returned no data!");
                     courses = [];
                 }
             })
-            .catch(error => console.error('❌ Error loading JSON:', error));
+            .catch(error => console.error('❌ Error fetching API data:', error));
+        */
 
+
+        fetch('http://localhost:5003/course/query', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({}) // Adjust the payload based on API requirements
+        })
+        .then(response => response.json())
+        .then(data => console.log("Course Data:", data))
+        .catch(error => console.error("Error fetching course data:", error));
+        
 
         // Search courses function
         function searchCourses() {
