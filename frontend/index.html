@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Search</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        input { width: 300px; padding: 5px; margin-bottom: 10px; }
+        .course { padding: 5px; border-bottom: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+
+    <h2>Search Courses</h2>
+    <input type="text" id="searchInput" placeholder="Search for a course..." onkeyup="searchCourses()">
+    <div id="results"></div>
+
+    <script>
+        let courses = [];
+
+        // Load the JSON file from the frontend folder
+        fetch('all_entries.json')
+            .then(response => response.json())
+            .then(data => {
+                console.log("JSON Loaded:", data); // Debugging
+                courses = data;
+            })
+            .catch(error => console.error('Error loading JSON:', error));
+
+
+        function searchCourses() {
+            let query = document.getElementById('searchInput').value.toLowerCase();
+            let resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = ""; // Clear previous results
+
+            if (query.length < 2) return; // Ignore very short queries
+
+            let filtered = courses.filter(course => {
+                let courseName = course.name ? course.name.toLowerCase() : ""; // Check if name exists
+                let courseDescription = course.description ? course.description.toLowerCase() : ""; // Check if description exists
+
+                return courseName.includes(query) || courseDescription.includes(query);
+            });
+
+            console.log("Filtered Results:", filtered); // Debugging
+
+            if (filtered.length === 0) {
+                resultsDiv.innerHTML = "<p>No results found</p>";
+            } else {
+                filtered.forEach(course => {
+                    let div = document.createElement('div');
+                    div.className = 'course';
+                    div.innerHTML = `<strong>${course.name || "No Name Available"}</strong><br>${course.description || "No description available"}`;
+                    resultsDiv.appendChild(div);
+                });
+            }
+        }
+        
+    </script>
+
+</body>
+</html>
