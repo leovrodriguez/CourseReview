@@ -84,6 +84,18 @@ services:
       ollama:
         condition: service_started
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - data_layer_api
+
 volumes:
   raw_course_data:
   ollama:
