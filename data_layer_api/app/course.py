@@ -2,7 +2,113 @@ from flask import Blueprint, request, jsonify
 from database.db_factory import get_vector_db
 from classes.course import Course, CourseReview
 from embedder.embedder import get_embedding, embed_course_vector
+from uuid import UUID
 course_bp = Blueprint('course', __name__)
+
+@course_bp.route('/', methods=['GET'])
+def get_courses():
+    try:
+        # Get basic pagination parameters
+        limit = request.args.get('limit', type=int)
+        offset = request.args.get('offset', type=int)
+        
+        # Get database connection
+        database = get_vector_db() 
+        courses = database.get_courses(limit=limit, offset=offset)
+        database.close()
+        
+        # Fix Coursera URLs - temporary handler for issue #25
+        for course in courses:
+            if course['platform'] == 'coursera' and not course['url'].startswith('http'):
+                course['url'] = f"https://www.coursera.org{course['url']}"
+        
+        return jsonify(courses)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@course_bp.route('/<course_id>', methods=['GET'])
+def get_course_by_id(course_id):
+    try:
+        # Get database connection
+        database = get_vector_db()
+        course = database.get_course_by_id(course_id)
+        database.close()
+        
+        if not course:
+            return jsonify({"error": "Course not found"}), 404
+            
+        # Fix Coursera URL if needed - temporary handler for issue #25
+        if course['platform'] == 'coursera' and not course['url'].startswith('http'):
+            course['url'] = f"https://www.coursera.org{course['url']}"
+            
+        return jsonify(course)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@course_bp.route('/<course_id>/reviews', methods=['GET'])
+def get_course_reviews(course_id):
+    """
+    Get all reviews for a specific course.
+    
+    URL Parameters:
+        course_id: The UUID of the course to fetch reviews for
+        
+    Query Parameters:
+        limit (optional): Maximum number of reviews to return
+        offset (optional): Number of reviews to skip (for pagination)
+        
+    Returns:
+        JSON with reviews array and stats object
+    """
+    try:
+        # Validate course_id format
+        try:
+            # Attempt to parse as UUID to validate format
+            uuid_obj = UUID(course_id)
+        except ValueError:
+            return jsonify({"error": "Invalid course ID format"}), 400
+            
+        # Get pagination parameters
+        limit = request.args.get('limit', type=int)
+        offset = request.args.get('offset', type=int)
+        
+        # Get database connection
+        database = get_vector_db()
+        
+        # First check if course exists
+        course = database.get_course_by_id(course_id)
+        if not course:
+            database.close()
+            return jsonify({"error": "Course not found"}), 404
+            
+        # Get reviews for the course
+        result = database.get_course_reviews(course_id)
+        
+        # Apply pagination to reviews if specified
+        if limit is not None or offset is not None:
+            reviews = result["reviews"]
+            offset = offset or 0
+            
+            if limit is not None:
+                paginated_reviews = reviews[offset:offset+limit]
+            else:
+                paginated_reviews = reviews[offset:]
+                
+            result["reviews"] = paginated_reviews
+            result["pagination"] = {
+                "total": len(reviews),
+                "offset": offset,
+                "limit": limit,
+                "returned": len(paginated_reviews)
+            }
+        
+        database.close()
+        return jsonify(result)
+        
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error getting course reviews: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 @course_bp.route('/insert', methods=['POST'])
 def insert_course():

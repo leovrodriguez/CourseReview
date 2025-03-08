@@ -61,7 +61,7 @@ services:
     volumes:
       - sql_lite_db:/server/data_layer_api/database/vectors.db
     environment:
-      - DB_IMPLEMENTATION=${DB_IMPLEMENTATION:-sqlite}
+      - DB_IMPLEMENTATION=${DB_IMPLEMENTATION:-postgres}
       - DB_PATH=${DB_PATH:-/server/data_layer_api/database/vectors.db}
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -69,8 +69,6 @@ services:
       - DB_PASSWORD=postgres
       - DB_NAME=course_data_etl
       - FLASK_ENV=development
-    expose:
-      - 5003
     ports:
       - "5003:5000"
     develop:

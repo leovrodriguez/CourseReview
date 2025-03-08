@@ -1,7 +1,11 @@
 from app import create_app
 import logging
+from flask_cors import CORS
 
 app = create_app()
+
+# Allow all origins - ONLY USE THIS IN DEVELOPMENT
+CORS(app, supports_credentials=True)
 
 #Configuration
 app.logger.setLevel(logging.INFO)
