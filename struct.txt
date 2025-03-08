@@ -1,0 +1,49 @@
+frontend/
+├── public/
+│   ├── favicon.ico
+│   ├── index.html
+│   ├── robots.txt
+│   └── manifest.json
+├── src/
+│   ├── api/
+│   │   ├── index.js         # Exports all API functions
+│   │   ├── courses.js       # Course-related API calls
+│   │   ├── users.js         # User-related API calls
+│   │   ├── ratings.js       # Rating-related API calls
+│   │   └── config.js        # API configuration (base URL, headers)
+│   ├── components/
+│   │   ├── common/          # Reusable UI components
+│   │   │   ├── Button.js
+│   │   │   ├── Card.js
+│   │   │   ├── Input.js
+│   │   │   ├── SearchBar.js
+│   │   │   └── Loading.js
+│   │   ├── courses/         # Course-specific components
+│   │   │   ├── CourseCard.js
+│   │   │   ├── CourseList.js
+│   │   │   └── CourseSearch.js
+│   │   └── users/           # User-specific components
+│   │       ├── UserCard.js
+│   │       ├── UserList.js
+│   │       └── UserForm.js
+│   ├── hooks/
+│   │   ├── useCourses.js    # Hook for course data
+│   │   ├── useUsers.js      # Hook for user data
+│   │   └── useRatings.js    # Hook for rating operations
+│   ├── pages/
+│   │   ├── Home.js          # Home page with courses
+│   │   ├── UserTest.js      # User management page
+│   │   └── RateCourse.js    # Course rating page
+│   ├── context/
+│   │   └── AppContext.js    # Global app state if needed
+│   ├── utils/
+│   │   ├── formatters.js    # For formatting data
+│   │   └── validators.js    # For form validation
+│   ├── styles/
+│   │   └── global.css       # Global styles
+│   ├── App.js               # Main app component
+│   ├── index.js             # Entry point
+│   └── routes.js            # Route definitions
+├── .gitignore
+├── package.json
+└── README.md

@@ -1,7 +1,7 @@
 import os
 
 # Default DB choice (test implementation)
-DB_IMPLEMENTATION = os.getenv("DB_IMPLEMENTATION", "sqlite")
+DB_IMPLEMENTATION = os.getenv("DB_IMPLEMENTATION", "postgres")
 
 # SQLLite DB Path
 DB_PATH = os.getenv("DB_PATH", os.path.abspath(os.path.join(os.path.dirname(__file__), "database/vectors.db")))

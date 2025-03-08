@@ -3,6 +3,7 @@ from typing import List, Optional
 from database.vector_db import VectorDB
 from env import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
 from uuid import UUID
+from datetime import datetime
 
 # Import the dataclasses
 from classes.course import Course, CourseReview
@@ -235,6 +236,205 @@ class PostgresVectorDB(VectorDB):
             
         return rows_deleted > 0
 
+    def get_courses(self, limit=None, offset=None):
+        """
+        Get all courses from the courses table with optional pagination.
+        
+        Args:
+            limit (int, optional): Maximum number of courses to return
+            offset (int, optional): Number of courses to skip
+            
+        Returns:
+            list: A list of dictionaries containing course information
+        """
+        query = """
+            SELECT 
+                id,
+                title,
+                description,
+                platform,
+                url,
+                authors,
+                skills,
+                rating,
+                num_ratings,
+                image_url,
+                is_free,
+                created_at
+            FROM 
+                courses
+            ORDER BY 
+                title
+        """
+        params = []
+        
+        # Add pagination if specified
+        if limit is not None:
+            query += " LIMIT %s"
+            params.append(limit)
+            
+            if offset is not None:
+                query += " OFFSET %s"
+                params.append(offset)
+        
+        with self.conn.cursor() as cursor:
+            cursor.execute(query, params)
+            
+            # Get column names
+            columns = [desc[0] for desc in cursor.description]
+            
+            # Convert query results to list of dictionaries
+            courses = []
+            for row in cursor.fetchall():
+                course_dict = dict(zip(columns, row))
+                
+                # Convert UUID and datetime to strings for JSON serialization
+                for key, value in course_dict.items():
+                    if isinstance(value, UUID):
+                        course_dict[key] = str(value)
+                    elif isinstance(value, datetime):
+                        course_dict[key] = value.isoformat()
+                        
+                courses.append(course_dict)
+                
+            return courses
+
+    def get_course_by_id(self, course_id):
+        """
+        Get details for a specific course by its ID.
+        
+        Args:
+            course_id (str): The ID of the course to fetch
+            
+        Returns:
+            dict: A dictionary containing the course information or None if not found
+        """
+        query = """
+            SELECT 
+                id,
+                title,
+                description,
+                platform,
+                url,
+                authors,
+                skills,
+                rating,
+                num_ratings,
+                image_url,
+                is_free,
+                created_at
+            FROM 
+                courses
+            WHERE 
+                id = %s
+        """
+        
+        with self.conn.cursor() as cursor:
+            cursor.execute(query, [course_id])
+            
+            # Get column names
+            columns = [desc[0] for desc in cursor.description]
+            
+            # Fetch the row
+            row = cursor.fetchone()
+            
+            if not row:
+                return None
+                
+            # Convert row to dictionary
+            course_dict = dict(zip(columns, row))
+            
+            # Convert UUID and datetime to strings for JSON serialization
+            for key, value in course_dict.items():
+                if isinstance(value, UUID):
+                    course_dict[key] = str(value)
+                elif isinstance(value, datetime):
+                    course_dict[key] = value.isoformat()
+                    
+            return course_dict
+
+    def get_course_reviews(self, course_id):
+        """
+        Get all reviews for a specific course.
+        
+        Args:
+            course_id (str or UUID): The ID of the course to fetch reviews for
+            
+        Returns:
+            list: A list of review dictionaries with user information
+        """
+        query = """
+            SELECT 
+                cr.id,
+                cr.user_id,
+                u.username,
+                u.email,
+                cr.course_id,
+                cr.rating,
+                cr.description,
+                cr.created_at
+            FROM 
+                course_reviews cr
+            JOIN
+                users u ON cr.user_id = u.id
+            WHERE 
+                cr.course_id = %s
+            ORDER BY 
+                cr.created_at DESC
+        """
+        
+        with self.conn.cursor() as cursor:
+            cursor.execute(query, [course_id])
+            
+            # Get column names
+            columns = [desc[0] for desc in cursor.description]
+            
+            # Convert query results to list of dictionaries
+            reviews = []
+            for row in cursor.fetchall():
+                review_dict = dict(zip(columns, row))
+                
+                # Convert UUID and datetime to strings for JSON serialization
+                for key, value in review_dict.items():
+                    if isinstance(value, UUID):
+                        review_dict[key] = str(value)
+                    elif isinstance(value, datetime):
+                        review_dict[key] = value.isoformat()
+                
+                # Limit email exposure - only include the first part
+                if 'email' in review_dict and review_dict['email']:
+                    email_parts = review_dict['email'].split('@')
+                    if len(email_parts) > 1:
+                        review_dict['email'] = f"{email_parts[0][0:3]}...@{email_parts[1]}"
+                        
+                reviews.append(review_dict)
+            
+            # Get aggregate statistics
+            stats_query = """
+                SELECT 
+                    COUNT(*) as review_count,
+                    AVG(rating) as avg_rating,
+                    MIN(rating) as min_rating,
+                    MAX(rating) as max_rating
+                FROM 
+                    course_reviews
+                WHERE 
+                    course_id = %s
+            """
+            
+            cursor.execute(stats_query, [course_id])
+            stats = dict(zip([desc[0] for desc in cursor.description], cursor.fetchone()))
+            
+            # Round average rating to 2 decimal places
+            if stats['avg_rating'] is not None:
+                stats['avg_rating'] = round(float(stats['avg_rating']), 2)
+                
+            result = {
+                "reviews": reviews,
+                "stats": stats
+            }
+                
+            return result
 
 # User Queries
     def insert_user(self, user: User):
@@ -310,6 +510,34 @@ class PostgresVectorDB(VectorDB):
             
         return rows_deleted > 0
     
+    def get_all_users(self):
+        """
+        Get all users from the users table.
+        
+        Returns:
+            list: A list of user dictionaries
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT
+                    id,
+                    username,
+                    email,
+                    created_at
+                FROM
+                    users
+                ORDER BY
+                    username
+            """)
+            
+            columns = [desc[0] for desc in cursor.description]
+            users = []
+            
+            for row in cursor.fetchall():
+                user = dict(zip(columns, row))
+                users.append(user)
+                
+            return users
 
     def insert_course_review(self, review: CourseReview):
         """
