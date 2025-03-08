@@ -33,7 +33,6 @@ def insert_user():
     email = payload["email"]
     database = get_vector_db()
     user_id = database.insert_user(User(username, email))
-    user_id = 32
     database.close()
     # Implement search logic here
     return jsonify({"message": "User Inserted Successfully",
