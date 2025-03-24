@@ -17,11 +17,6 @@ def get_courses():
         courses = database.get_courses(limit=limit, offset=offset)
         database.close()
         
-        # Fix Coursera URLs - temporary handler for issue #25
-        for course in courses:
-            if course['platform'] == 'coursera' and not course['url'].startswith('http'):
-                course['url'] = f"https://www.coursera.org{course['url']}"
-        
         return jsonify(courses)
     except Exception as e:
         return jsonify({"error": str(e)}), 500

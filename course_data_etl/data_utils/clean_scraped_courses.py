@@ -45,11 +45,12 @@ def parse_udemy_courses(raw_data, course_website: CourseWebsite) -> List[Course]
     Parse raw coursera data into a list of Course objects
     """
     courses: List[Course] = []
-    
     raw_courses = raw_data
 
     if not raw_courses:
         print("No udemy courses found")
+    else:
+        print(f"Found {len(raw_courses)} udemy courses")
 
     for course in raw_courses:
         name = course.get("title", "N/A")
@@ -62,7 +63,7 @@ def parse_udemy_courses(raw_data, course_website: CourseWebsite) -> List[Course]
         is_free = not course.get("is_paid", False)
         url = "https://www.udemy.com" + course.get("url", "")
 
-        course = Course(
+        newCourseObj = Course(
             original_website=course_website,
             name=name,
             authors=authors,
@@ -74,7 +75,9 @@ def parse_udemy_courses(raw_data, course_website: CourseWebsite) -> List[Course]
             is_free=is_free,
             url=url
         )
-        courses.append(course)
+
+        courses.append(newCourseObj)
+
     return courses
 
 def parse_coursera_courses(raw_data, course_website: CourseWebsite) -> List[Course]:
@@ -82,22 +85,24 @@ def parse_coursera_courses(raw_data, course_website: CourseWebsite) -> List[Cour
     Parse raw coursera data into a list of Course objects
     """
     courses: List[Course] = []
-    elements = raw_data[0].get("data", {}).get("SearchResult", {}).get("search", [])[0].get("elements", [])
-    if (len(elements) == 0): 
+    raw_courses = raw_data[0].get("data", {}).get("SearchResult", {}).get("search", [])[0].get("elements", [])
+
+    if not raw_courses:
         print("No coursera courses found")
     else:
-        print(f"Found {len(elements)} coursera courses")
-    for element in elements:
-        name = element.get("name")
-        authors = element.get("partners", [])
-        skills = element.get("skills", [])
-        rating = element.get("avgProductRating", 0.0)
-        num_ratings = element.get("numProductRatings", 0)
-        image_url = element.get("imageUrl", "")
-        is_free = element.get("isCourseFree", False)
-        url = element.get("url", "")
+        print(f"Found {len(raw_courses)} coursera courses")
 
-        course = Course(
+    for course in raw_courses:
+        name = course.get("name")
+        authors = course.get("partners", [])
+        skills = course.get("skills", [])
+        rating = course.get("avgProductRating", 0.0)
+        num_ratings = course.get("numProductRatings", 0)
+        image_url = course.get("imageUrl", "")
+        is_free = course.get("isCourseFree", False)
+        url = "https://www.coursera.org" + course.get("url", "")
+
+        newCourseObj = Course(
             original_website=course_website,
             name=name,
             authors=authors,
@@ -109,6 +114,7 @@ def parse_coursera_courses(raw_data, course_website: CourseWebsite) -> List[Cour
             is_free=is_free,
             url=url
         )
-        courses.append(course)
+
+        courses.append(newCourseObj)
     
     return courses
