@@ -25,6 +25,8 @@ import { useCourses } from '../hooks/useCourses';
 import CourseList from '../components/courses/CourseList';
 import SearchBar from '../components/common/SearchBar';
 import Pagination from '../components/common/Pagination';
+import SortBar from '../components/common/SortBar';
+
 
 const Home = () => {
   const { 
@@ -38,7 +40,9 @@ const Home = () => {
     pageSize,
     totalPages,
     goToPage,
-    changePageSize
+    changePageSize,
+    sortBy,
+    sortConfig
   } = useCourses();
 
   return (
@@ -56,6 +60,8 @@ const Home = () => {
         </button>
       </div>
       
+      <SortBar onSort={sortBy} sortConfig={sortConfig} />
+
       {error && <div className="error-message">Error: {error}</div>}
       
       {loading ? (

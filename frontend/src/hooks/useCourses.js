@@ -1,18 +1,44 @@
 // src/hooks/useCourses.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect , useCallback} from 'react';
 import { fetchAllCourses, searchCourses } from '../api/courses';
 
-export const useCourses = (initialQuery = '') => {
+export const useCourses = (initialQuery = '', initialSort = {}) => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [query, setQuery] = useState(initialQuery);
+  const [sortConfig, setSortConfig] = useState(initialSort);
   const [refreshIndex, setRefreshIndex] = useState(0);
   
   // Pagination state
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
   const [totalCourses, setTotalCourses] = useState(0);
+
+  const applySort = useCallback((items) => {
+    if (!sortConfig.key) return items;
+    
+    return [...items].sort((a, b) => {
+      const aValue = getSortValue(a, sortConfig.key);
+      const bValue = getSortValue(b, sortConfig.key);
+      
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [sortConfig]);
+
+  const getSortValue = (course, key) => {
+    switch (key) {
+      case 'internal_rating':
+        return course.internalRatings?.avg_rating || 0;
+      case 'external_rating':
+        return course.rating || 0;
+      default:
+        //When no specified sort order, ensuring all sort values are equal will mantain sort oder
+        return 0; 
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,6 +49,7 @@ export const useCourses = (initialQuery = '') => {
         if (query && query.trim() !== '') {
           // For semantic search, we'll get all results at once and paginate client-side
           data = await searchCourses(query, 50); // Get a larger batch for client-side pagination
+          data = applySort(data);
           
           // Client-side pagination - apply after receiving all results
           const offset = (page - 1) * pageSize;
@@ -34,6 +61,7 @@ export const useCourses = (initialQuery = '') => {
           // For regular fetching, use the server pagination
           const offset = (page - 1) * pageSize;
           data = await fetchAllCourses(pageSize, offset);
+          data = applySort(data);
           
           if (Array.isArray(data)) {
             setCourses(data);
@@ -63,7 +91,11 @@ export const useCourses = (initialQuery = '') => {
     };
 
     fetchData();
-  }, [query, page, pageSize, refreshIndex]);
+  }, [query, page, pageSize, refreshIndex, sortConfig, applySort]);
+
+  const sortBy = (key, direction = 'asc') => {
+    setSortConfig({ key, direction });
+  };
 
   const refresh = () => setRefreshIndex(prev => prev + 1);
   
@@ -101,6 +133,8 @@ export const useCourses = (initialQuery = '') => {
     nextPage,
     prevPage,
     goToPage,
-    changePageSize
+    changePageSize,
+    sortBy,
+    sortConfig
   };
 };
