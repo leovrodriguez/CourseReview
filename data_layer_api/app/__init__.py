@@ -1,7 +1,18 @@
 from flask import Flask
+from flask_jwt_extended import JWTManager
+import os
+import binascii
 
 def create_app():
     app = Flask(__name__)
+
+    
+    # Generate a random secret key for JWT
+    def generate_secret_key():
+        return binascii.hexlify(os.urandom(32)).decode()
+
+    app.config['JWT_SECRET_KEY'] = generate_secret_key()
+    jwt = JWTManager(app)
 
     from .search import search_bp
     from .discussion import discussion_bp

@@ -435,6 +435,81 @@ class PostgresVectorDB(VectorDB):
             }
                 
             return result
+        
+    def find_by_email(self, email):
+        """
+        Find a user by their email.
+        
+        Args:
+            email (str): The user's email to search for
+            
+        Returns:
+            dict: A dictionary containing the user information or None if not found
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM users WHERE email = %s",
+                [email]
+            )
+            
+            columns = [desc[0] for desc in cursor.description]
+            user = cursor.fetchone()
+            
+            if user:
+                user_dict = dict(zip(columns, user))
+                return user_dict
+                
+        return None
+
+    def find_by_id(self, id):
+        """
+        Find a user by their id.
+        
+        Args:
+            email (str): The user's id to search for
+            
+        Returns:
+            dict: A dictionary containing the user information or None if not found
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM users WHERE id = %s",
+                [id]
+            )
+            
+            columns = [desc[0] for desc in cursor.description]
+            user = cursor.fetchone()
+            
+            if user:
+                user_dict = dict(zip(columns, user))
+                return user_dict
+                
+        return None
+        
+    def find_by_username(self, username):
+        """
+        Find a user by their username.
+        
+        Args:
+            username (str): The username to search for
+            
+        Returns:
+            dict: A dictionary containing the user information or None if not found
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM users WHERE username = %s",
+                [username]
+            )
+            
+            columns = [desc[0] for desc in cursor.description]
+            user = cursor.fetchone()
+            
+            if user:
+                user_dict = dict(zip(columns, user))
+                return user_dict
+                
+        return None
 
 # User Queries
     def insert_user(self, user: User):
@@ -451,7 +526,7 @@ class PostgresVectorDB(VectorDB):
             # Check if user already exists
             cursor.execute(
                 "SELECT id FROM users WHERE username = %s OR email = %s",
-                [user.username, user.email]
+                [user.username, user.email, user.password, user.salt]
             )
             existing_user = cursor.fetchone()
             
@@ -466,11 +541,13 @@ class PostgresVectorDB(VectorDB):
                 INSERT INTO users (
                     username,
                     email
-                ) VALUES (%s, %s)
+                ) VALUES (%s, %s, %s, %s)
                 RETURNING id
             """, [
                 user.username,
-                user.email
+                user.email,
+                user.password,
+                user.salt
             ])
             
             # Get the generated user ID

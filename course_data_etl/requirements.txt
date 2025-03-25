@@ -2,3 +2,5 @@ mypy
 requests
 types-requests
 ollama
+flask
+flask-jwt-extended
