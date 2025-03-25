@@ -166,8 +166,12 @@ def hash_password(password, salt):
     return hashed_password
 
 def verify_password(stored_salt, stored_hash, input_password):
+    # decode the salt
+    decoded_salt = base64.b64decode(stored_salt)
+    decoded_hash = base64.b64decode(stored_hash)
+
     # hash with the salt
-    input_hash = hash_password(input_password, stored_salt)
+    input_hash = hash_password(input_password, decoded_salt)
     
     # compare
-    return input_hash == stored_hash
+    return input_hash == decoded_hash
