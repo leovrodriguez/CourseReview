@@ -6,3 +6,4 @@ types-psycopg2
 requests
 types-requests
 flask-cors==5.0.1
+flask_jwt_extended

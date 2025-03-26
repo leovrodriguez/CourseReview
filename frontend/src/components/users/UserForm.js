@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { API_BASE_URL } from './config';
+import { API_BASE_URL } from '../../api/config';
 
 const UserForm = ({ onSubmit }) => {
   const [username, setUsername] = useState('');
