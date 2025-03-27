@@ -67,7 +67,7 @@ def check_username():
         # Use the find_by_username method to fetch the user
         user = database.find_by_username(username)
 
-        if user is None:
+        if user is not None:
             return jsonify({'isAvailable': False, 'message': 'Username is already taken.'})
         
         return jsonify({'isAvailable': True, 'message': 'Username is available.'})
@@ -93,7 +93,7 @@ def check_email():
     try:
         user = database.find_by_email(email)
 
-        if user is None:
+        if user is not None:
             return jsonify({'isAvailable': False, 'message': 'Email is already taken.'})
         
         return jsonify({'isAvailable': True, 'message': 'Email is available.'})
