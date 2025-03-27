@@ -76,7 +76,7 @@ const UserForm = ({ onSubmit }) => {
     }
   };
 
-  const validatePassword = () => {
+  const validatePassword = async () => {
     const specialCharacterRegex = /[!@#$%^&*(),.?":{}|<>]/;
     const uppercaseRegex = /[A-Z]/;
     const numberRegex = /[0-9]/;
@@ -89,10 +89,31 @@ const UserForm = ({ onSubmit }) => {
     if (
       password.length < 8 ||
       !specialCharacterRegex.test(password) ||
-      !uppercaseRegex.test(password) ||
       !numberRegex.test(password)
     ) {
       setPasswordError("Password must be at least 8 characters, at least one special character, at least one uppercase letter, and at least one number.");
+      return false;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/checkPassword`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      });
+      if (!response.ok) {
+        throw new Error("Error checking password");
+      }
+      const data = await response.json();
+      if (!data.isAvailable) {
+        setPasswordError(data.message);
+        return false;
+      }
+    } catch (error) {
+      console.error("Error checking password:", error);
+      setPasswordError("Error checking password with the backend");
       return false;
     }
     setPasswordError("");

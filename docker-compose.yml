@@ -31,7 +31,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=course_data_etl
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes: 
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -64,7 +64,7 @@ services:
       - DB_IMPLEMENTATION=${DB_IMPLEMENTATION:-postgres}
       - DB_PATH=${DB_PATH:-/server/data_layer_api/database/vectors.db}
       - DB_HOST=postgres
-      - DB_PORT=5433
+      - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=course_data_etl
