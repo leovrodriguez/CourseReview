@@ -120,11 +120,11 @@ def _get_full_user(username):
             if isinstance(value, (uuid.UUID, object)):
                 user[key] = str(value)
 
-        return jsonify(user)
+        return user
 
     except Exception as e:
         # Handle unexpected errors and return them in the response
-        return jsonify({"error with connecting to database"}), 500
+        return None
 
     finally:
         database.close()
@@ -151,11 +151,8 @@ def insert_user():
     user_id = database.insert_user(User(username, email, password_hashed_string, salt_string))
     database.close()
 
-    # get the user
-    user = _get_full_user(username)
-
     # now create the login token
-    access_token = create_access_token(identity=str(user["id"]), expires_delta=timedelta(hours=1))
+    access_token = create_access_token(identity=str(user_id), expires_delta=timedelta(hours=1))
 
     # Implement search logic here
     return jsonify({"message": "User Inserted Successfully",

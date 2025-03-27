@@ -524,7 +524,9 @@ class PostgresVectorDB(VectorDB):
             cursor.execute("""
                 INSERT INTO users (
                     username,
-                    email
+                    email,
+                    password,
+                    salt
                 ) VALUES (%s, %s, %s, %s)
                 RETURNING id
             """, [
