@@ -42,7 +42,9 @@ class PostgresVectorDB(VectorDB):
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 username TEXT UNIQUE NOT NULL,
                 email TEXT UNIQUE NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                password TEXT NOT NULL,
+                salt TEXT NOT NULL
             );
 
             -- Courses Table
