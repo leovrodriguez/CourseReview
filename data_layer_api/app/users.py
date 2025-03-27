@@ -8,6 +8,7 @@ import base64
 import hashlib
 from flask_jwt_extended import create_access_token, get_jwt_identity
 from datetime import timedelta
+import re
 
 
 users_bp = Blueprint('users', __name__)
@@ -30,6 +31,26 @@ def get_users():
         return jsonify({"error": str(e)}), 500
     finally:
         database.close()
+
+@users_bp.route('/validatePassword', methods=['POST'])
+def validate_password():
+    payload = request.get_json()
+    password = payload["password"]
+
+    special_character_regex = re.compile(r'[!@#$%^&*(),.?":{}|<>]')
+    uppercase_regex = re.compile(r'[A-Z]')
+    number_regex = re.compile(r'[0-9]')
+
+    if not password.strip():
+        return jsonify({'isValid': False, 'message': 'Password cannot be blank'})
+
+    if (len(password) < 8 or 
+        not special_character_regex.search(password) or 
+        not uppercase_regex.search(password) or 
+        not number_regex.search(password)):
+        return jsonify({'isValid': False, 'message': 'Password must be at least 8 characters, include at least one special character one uppercase letter, and one number.'})
+
+    return jsonify({'isValid': True, 'message': 'Password is valid.'})
 
 @users_bp.route('/checkUsername', methods=['POST'])
 def check_username():

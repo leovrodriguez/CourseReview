@@ -526,7 +526,7 @@ class PostgresVectorDB(VectorDB):
             # Check if user already exists
             cursor.execute(
                 "SELECT id FROM users WHERE username = %s OR email = %s",
-                [user.username, user.email, user.password, user.salt]
+                [user.username, user.email]
             )
             existing_user = cursor.fetchone()
             
