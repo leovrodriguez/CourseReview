@@ -54,10 +54,14 @@ def validate_password():
 
 @users_bp.route('/checkUsername', methods=['POST'])
 def check_username():
-    database = get_vector_db()  # Get a connection to the database
-
     payload = request.get_json()
     username = payload["username"]
+
+    # check if length is greater than 3
+    if len(username) < 3:
+        return jsonify({'isAvailable': False, 'message': 'Username must be at least 3 characters long.'})
+
+    database = get_vector_db()  # Get a connection to the database
     
     try:
         # Use the find_by_username method to fetch the user
@@ -70,17 +74,21 @@ def check_username():
 
     except Exception as e:
         # Handle unexpected errors and return them in the response
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error loading the database"}), 500
 
     finally:
         database.close()
 
 @users_bp.route('/checkEmail', methods=['POST'])
 def check_email():
-    database = get_vector_db()  # Get a connection to the database
-
     payload = request.get_json()
     email = payload["email"]
+
+    email_regex = re.compile(r'^[\w\.-]+@([\w-]+\.)+[\w-]{2,4}$')
+    if not email_regex.match(email):
+        return jsonify({'isAvailable': False, 'message': 'Invalid email format (e.g., johndoe@example.com).'})
+
+    database = get_vector_db()  # Get a connection to the database
     
     try:
         user = database.find_by_email(email)
@@ -92,7 +100,7 @@ def check_email():
 
     except Exception as e:
         # Handle unexpected errors and return them in the response
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error with connecting to database"}), 500
 
     finally:
         database.close()
@@ -116,7 +124,7 @@ def _get_full_user(username):
 
     except Exception as e:
         # Handle unexpected errors and return them in the response
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error with connecting to database"}), 500
 
     finally:
         database.close()

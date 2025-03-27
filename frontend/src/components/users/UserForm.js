@@ -29,7 +29,8 @@ const UserForm = ({ onSubmit }) => {
       }
       const data = await response.json();
       if (!data.isAvailable) {
-        setUsernameError("Username is not available");
+        // set the error to be displayed
+        setUsernameError(data.message);
         return false;
       } else {
         setUsernameError("");
@@ -62,7 +63,7 @@ const UserForm = ({ onSubmit }) => {
       }
       const data = await response.json();
       if (!data.isAvailable) {
-        setEmailError("Email is not available");
+        setEmailError(data.message);
         return false;
       } else {
         setEmailError("");
