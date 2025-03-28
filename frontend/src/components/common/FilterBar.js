@@ -14,6 +14,7 @@ export const FilterBar = ({ filters, onFiltersChange }) => {
 
   return (
     <form className="filter-bar" onSubmit={handleSubmit}>
+      <h2 className="filter-bar-header">Filters</h2>      
       <div className="filter-section">
         <div className="filter-section-title">RateMyCourse Minimum Star Rating</div>
         <select

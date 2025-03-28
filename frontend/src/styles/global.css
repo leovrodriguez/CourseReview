@@ -1022,9 +1022,8 @@ button:disabled {
 
 .sort-filter-bar-container {
   display: flex;
-  align-items: right;
+  justify-content: flex-end;
   margin-bottom: 1.5rem;
-  max-width: 400px;
 }
 
 .sort-select-wrapper {
