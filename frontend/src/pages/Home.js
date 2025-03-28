@@ -67,7 +67,6 @@ const Home = () => {
         <SortBar onSort={sortBy} sortConfig={sortConfig} />
       </div>
 
-
       {error && <div className="error-message">Error: {error}</div>}
 
       {loading ? (
