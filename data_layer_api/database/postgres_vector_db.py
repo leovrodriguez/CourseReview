@@ -78,24 +78,6 @@ class PostgresVectorDB(VectorDB):
                 UNIQUE (user_id, course_id) -- Ensures a user can only review a course once
             );               
 
-            -- Learning Journeys Table
-            CREATE TABLE IF NOT EXISTS learning_journeys (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                title TEXT NOT NULL,
-                description TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-
-            -- Learning Journey Courses (to maintain order)
-            CREATE TABLE IF NOT EXISTS learning_journey_courses (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                learning_journey_id UUID NOT NULL REFERENCES learning_journeys(id) ON DELETE CASCADE,
-                course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-                course_order INT NOT NULL CHECK (course_order > 0),
-                UNIQUE (learning_journey_id, course_order)
-            );
-
             -- Discussions Table
             CREATE TABLE IF NOT EXISTS discussions (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
