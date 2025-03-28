@@ -9,6 +9,13 @@ export const useCourses = (initialQuery = '', initialSort = {}) => {
   const [query, setQuery] = useState(initialQuery);
   const [sortConfig, setSortConfig] = useState(initialSort);
   const [refreshIndex, setRefreshIndex] = useState(0);
+  const [filters, setFilters] = useState({
+    internalRating: null,
+    externalRating: null,
+    reviewCount: null,
+    platformReviews: null,
+    priceType: null
+  });
   
   // Pagination state
   const [page, setPage] = useState(1);
@@ -40,6 +47,44 @@ export const useCourses = (initialQuery = '', initialSort = {}) => {
     }
   };
 
+  const applyFilters = useCallback((courses) => {
+    return courses.filter(course => {
+      // Internal rating filter
+      if (filters.internalRating && 
+          course.internalRatings?.avg_rating < filters.internalRating) {
+        return false;
+      }
+      
+      // External rating filter
+      if (filters.externalRating && 
+          course.rating < filters.externalRating) {
+        return false;
+      }
+      
+      // Review count filter
+      if (filters.reviewCount && 
+          course.internalRatings?.total_reviews < filters.reviewCount) {
+        return false;
+      }
+      
+      // Platform reviews filter
+      if (filters.platformReviews && 
+          course.rating < filters.platformReviews) {
+        return false;
+      }
+      
+      // Price type filter
+      if (filters.priceType === 'free' && course.price > 0) {
+        return false;
+      }
+      if (filters.priceType === 'paid' && course.price === 0) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [filters]);
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -49,6 +94,7 @@ export const useCourses = (initialQuery = '', initialSort = {}) => {
         if (query && query.trim() !== '') {
           // For semantic search, we'll get all results at once and paginate client-side
           data = await searchCourses(query, 50); // Get a larger batch for client-side pagination
+          data = applyFilters(data)
           data = applySort(data);
           
           // Client-side pagination - apply after receiving all results
@@ -61,6 +107,7 @@ export const useCourses = (initialQuery = '', initialSort = {}) => {
           // For regular fetching, use the server pagination
           const offset = (page - 1) * pageSize;
           data = await fetchAllCourses(pageSize, offset);
+          data = applyFilters(data)
           data = applySort(data);
           
           if (Array.isArray(data)) {
@@ -91,7 +138,7 @@ export const useCourses = (initialQuery = '', initialSort = {}) => {
     };
 
     fetchData();
-  }, [query, page, pageSize, refreshIndex, sortConfig, applySort]);
+  }, [query, page, pageSize, refreshIndex, sortConfig, applySort, filters, applyFilters]);
 
   const sortBy = (key, direction = 'asc') => {
     setSortConfig({ key, direction });
@@ -135,6 +182,8 @@ export const useCourses = (initialQuery = '', initialSort = {}) => {
     goToPage,
     changePageSize,
     sortBy,
-    sortConfig
+    sortConfig,
+    setFilters,
+    filters
   };
 };

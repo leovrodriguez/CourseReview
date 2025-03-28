@@ -26,15 +26,16 @@ import CourseList from '../components/courses/CourseList';
 import SearchBar from '../components/common/SearchBar';
 import Pagination from '../components/common/Pagination';
 import SortBar from '../components/common/SortBar';
+import FilterBar from '../components/common/FilterBar'
 
 
 const Home = () => {
-  const { 
-    courses, 
-    loading, 
-    error, 
+  const {
+    courses,
+    loading,
+    error,
     query,
-    search, 
+    search,
     refresh,
     page,
     pageSize,
@@ -42,16 +43,18 @@ const Home = () => {
     goToPage,
     changePageSize,
     sortBy,
-    sortConfig
+    sortConfig,
+    setFilters,
+    filters
   } = useCourses();
 
   return (
-    <div className="home-page">
+    <div>
       <h1>Course Explorer</h1>
-      
+
       <div className="search-container">
-        <SearchBar 
-          placeholder="Search for courses by topic, skill, or keyword..." 
+        <SearchBar
+          placeholder="Search for courses by topic, skill, or keyword..."
           initialValue={query}
           onSearch={search}
         />
@@ -59,18 +62,24 @@ const Home = () => {
           Refresh
         </button>
       </div>
-      
-      <SortBar onSort={sortBy} sortConfig={sortConfig} />
+
+      <div className="sort-filter-bar-container">
+        <SortBar onSort={sortBy} sortConfig={sortConfig} />
+      </div>
+
 
       {error && <div className="error-message">Error: {error}</div>}
-      
+
       {loading ? (
         <div className="loading">Loading courses...</div>
       ) : (
         <>
           {courses.length === 0 ? (
-            <div className="no-results">
-              <p>No courses found. Try adjusting your search criteria.</p>
+            <div className="course-filter-container">
+              <FilterBar filters={filters} onFiltersChange={setFilters} />
+              <div className="no-results">
+                <p>No courses found. Try adjusting your search criteria.</p>
+              </div>
             </div>
           ) : (
             <>
@@ -79,10 +88,12 @@ const Home = () => {
                   <p>Showing results for: <strong>{query}</strong></p>
                 </div>
               )}
-              
-              <CourseList courses={courses} />
-              
-              <Pagination 
+              <div className="course-filter-container">
+                <FilterBar filters={filters} onFiltersChange={setFilters} />
+                <CourseList courses={courses} />
+              </div>
+
+              <Pagination
                 currentPage={page}
                 totalPages={totalPages}
                 onPageChange={goToPage}
