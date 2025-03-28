@@ -101,6 +101,20 @@ def get_course_reviews(course_id):
         print(f"Error getting course reviews: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+@course_bp.route('/<course_id>/review', methods=['POST'])
+def review_course(course_id):
+    payload = request.get_json()
+    user_id = payload.get("user_id")
+    rating = payload.get("rating")
+    description = payload.get("description", None)
+    review = CourseReview(user_id, course_id, rating, description)
+    
+    database = get_vector_db()
+    database.insert_course_review(review)
+    database.close()
+
+    return jsonify({"message": "Course Review Inserted"})
+
 @course_bp.route('/insert', methods=['POST'])
 def insert_course():
     payload = request.get_json()
@@ -127,21 +141,6 @@ def query_course():
     database.close()
     
     return jsonify({"courses": courses})
-
-@course_bp.route('/review', methods=['POST'])
-def review_course():
-    payload = request.get_json()
-    user_id = payload.get("user_id")
-    course_id = payload.get("course_id")
-    rating = payload.get("rating")
-    description = payload.get("description", None)
-    review = CourseReview(user_id, course_id, rating, description)
-    
-    database = get_vector_db()
-    database.insert_course_review(review)
-    database.close()
-
-    return jsonify({"message": "Course Review Inserted"})
 
 @course_bp.route('/clear', methods=['POST'])
 def clear_courses():

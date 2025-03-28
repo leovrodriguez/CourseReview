@@ -32,6 +32,37 @@ def get_users():
     finally:
         database.close()
 
+# Add this route to your users_bp Blueprint in users.py
+
+@users_bp.route('/<user_id>', methods=['GET'])
+def get_user_by_id_route(user_id):
+    database = get_vector_db()
+    try:
+        # Get user from the database
+        user = database.get_user_by_id(user_id)
+        
+        if user is None:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Remove sensitive information
+        if "password" in user:
+            del user["password"]
+        if "salt" in user:
+            del user["salt"]
+        if "id" in user:
+            del user["id"]
+        
+        # Convert UUID and datetime objects to strings for JSON serialization
+        for key, value in user.items():
+            if isinstance(value, (uuid.UUID, object)):
+                user[key] = str(value)
+        
+        return jsonify(user)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        database.close()
+
 @users_bp.route('/validatePassword', methods=['POST'])
 def validate_password():
     payload = request.get_json()
@@ -64,8 +95,8 @@ def check_username():
     database = get_vector_db()  # Get a connection to the database
     
     try:
-        # Use the find_by_username method to fetch the user
-        user = database.find_by_username(username)
+        # Use the get_user_by_username method to fetch the user
+        user = database.get_user_by_username(username)
 
         if user is not None:
             return jsonify({'isAvailable': False, 'message': 'Username is already taken.'})
@@ -110,8 +141,8 @@ def _get_full_user(username):
     database = get_vector_db()  # Get a connection to the database
     
     try:
-        # Use the find_by_username method to fetch the user
-        user = database.find_by_username(username)
+        # Use the get_user_by_username method to fetch the user
+        user = database.get_user_by_username(username)
 
         if user is None:
             return jsonify({"error": "User not found"}), 404

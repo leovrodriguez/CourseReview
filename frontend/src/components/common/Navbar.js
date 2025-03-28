@@ -84,7 +84,6 @@ const Navbar = () => {
       
       <ul className="navbar-links">
         <li><a href="/">Home</a></li>
-        <li><a href="/users">User Testing</a></li>
       </ul>
       
       <div className="navbar-auth">

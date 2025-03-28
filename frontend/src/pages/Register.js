@@ -29,6 +29,14 @@ const Register = () => {
       // Store the token in localStorage
       localStorage.setItem('token', data.access_token);
       
+      // Store user information in localStorage
+      const userInfo = {
+        id: data.user_id, // The registration API returns user_id directly
+        username: userData.username
+      };
+      
+      localStorage.setItem('user', JSON.stringify(userInfo));
+      
       // Trigger a custom event to notify other components of login
       window.dispatchEvent(new Event('login'));
       

@@ -36,9 +36,21 @@ const Login = () => {
       }
       
       const data = await response.json();
+
+      if (!data.successful) {
+        throw new Error('Invalid username or password');
+      }
       
       // Store the token in localStorage
       localStorage.setItem('token', data.access_token);
+      
+      // Store user information in localStorage
+      const userData = {
+        id: data.user_id || _extractUserIdFromToken(data.access_token),
+        username: username
+      };
+      
+      localStorage.setItem('user', JSON.stringify(userData));
       
       // Trigger a custom event to notify other components of login
       window.dispatchEvent(new Event('login'));
@@ -48,6 +60,27 @@ const Login = () => {
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message || 'Failed to login. Please try again.');
+    }
+  };
+
+  // Helper function to extract user ID from JWT token
+  const _extractUserIdFromToken = (token) => {
+    try {
+      // JWT tokens are in the format: header.payload.signature
+      // We need to decode the payload (the middle part)
+      const payload = token.split('.')[1];
+      
+      // The payload is base64 encoded, so we need to decode it
+      const decodedPayload = atob(payload);
+      
+      // Parse the decoded payload as JSON
+      const payloadData = JSON.parse(decodedPayload);
+      
+      // The user ID should be in the 'sub' or 'identity' field
+      return payloadData.sub || payloadData.identity;
+    } catch (error) {
+      console.error('Error extracting user ID from token:', error);
+      return null;
     }
   };
 

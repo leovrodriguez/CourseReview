@@ -2,97 +2,108 @@
 import React from 'react';
 import { useReviews } from '../../hooks/useReviews';
 
-const StarRating = ({ rating }) => {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating - fullStars >= 0.5;
-  
-  return (
-    <div className="star-rating">
-      {[...Array(5)].map((_, index) => (
-        <span key={index} className={
-          index < fullStars 
-            ? "star-full" 
-            : (index === fullStars && hasHalfStar) 
-              ? "star-half" 
-              : "star-empty"
-        }>
-          {index < fullStars 
-            ? "★" 
-            : (index === fullStars && hasHalfStar) 
-              ? "★" 
-              : "☆"}
-        </span>
-      ))}
-    </div>
-  );
-};
-
 const CourseReviews = ({ courseId }) => {
-  const { 
-    reviews, 
-    stats, 
-    loading, 
-    error, 
-    loadMore, 
-    hasMore 
-  } = useReviews(courseId);
+  const { reviews, loading, error, stats } = useReviews(courseId);
 
-  if (loading && reviews.length === 0) {
-    return <div className="loading">Loading reviews...</div>;
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const renderStars = (rating) => {
+    return "★★★★★".substring(0, Math.round(rating)) + 
+           "☆☆☆☆☆".substring(0, 5 - Math.round(rating));
+  };
+
+  // Calculate review distribution manually
+  const calculateDistribution = () => {
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    
+    if (reviews && reviews.length > 0) {
+      reviews.forEach(review => {
+        const rating = Math.round(review.rating);
+        if (rating >= 1 && rating <= 5) {
+          distribution[rating] += 1;
+        }
+      });
+    }
+    
+    return distribution;
+  };
+
+  if (loading) {
+    return <div className="review-loading">Loading reviews...</div>;
   }
 
   if (error) {
-    return <div className="error-message">Error loading reviews: {error}</div>;
+    return <div className="review-error">Error loading reviews: {error}</div>;
   }
 
-  if (reviews.length === 0) {
-    return <div className="no-reviews">No reviews yet for this course.</div>;
+  if (!reviews || reviews.length === 0) {
+    return (
+      <div className="no-reviews-container">
+        <p className="no-reviews-message">No reviews yet. Be the first to review this course!</p>
+      </div>
+    );
   }
+
+  // Calculate real distribution from reviews
+  const distribution = calculateDistribution();
+  const totalReviews = reviews.length;
 
   return (
-    <div className="course-reviews-container">
+    <div className="course-reviews">
       <div className="reviews-summary">
-        <h3>Student Reviews</h3>
-        <div className="reviews-stats">
-          <div className="avg-rating">
-            <span className="rating-number">{stats.avg_rating}</span>
-            <StarRating rating={stats.avg_rating} />
-            <span className="review-count">({stats.review_count} reviews)</span>
-          </div>
+        <div className="average-rating">
+          <span className="avg-rating-value">{parseFloat(stats.avg_rating).toFixed(1)}</span>
+          <div className="avg-rating-stars">{renderStars(parseFloat(stats.avg_rating))}</div>
+          <span className="total-reviews">Based on {totalReviews} review{totalReviews !== 1 ? 's' : ''}</span>
+        </div>
+        
+        <div className="rating-distribution">
+          {[5, 4, 3, 2, 1].map((star) => (
+            <div key={star} className="rating-bar-container">
+              <span className="star-label">{star} star{star !== 1 ? 's' : ''}</span>
+              <div className="rating-bar-wrapper">
+                <div 
+                  className="rating-bar" 
+                  style={{ 
+                    width: `${totalReviews > 0 
+                      ? (distribution[star] / totalReviews) * 100 
+                      : 0}%` 
+                  }}
+                ></div>
+              </div>
+              <span className="count-label">
+                {distribution[star]}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
       
       <div className="reviews-list">
-        {reviews.map(review => (
+        {reviews.map((review) => (
           <div key={review.id} className="review-item">
             <div className="review-header">
               <div className="reviewer-info">
-                <span className="reviewer-name">{review.username || 'Anonymous User'}</span>
+                <span className="reviewer-name">{review.username}</span>
+                <span className="review-date">{formatDate(review.created_at)}</span>
               </div>
               <div className="review-rating">
-                <StarRating rating={review.rating} />
-                <span className="review-date">
-                  {new Date(review.created_at).toLocaleDateString()}
-                </span>
+                <span className="rating-stars">{renderStars(review.rating)}</span>
+                <span className="rating-value">{review.rating}.0</span>
               </div>
             </div>
             
             {review.description && (
               <div className="review-content">
-                <p>{review.description}</p>
+                <p className="review-text">{review.description}</p>
               </div>
             )}
           </div>
         ))}
       </div>
-      
-      {hasMore && (
-        <div className="load-more-container">
-          <button onClick={loadMore} className="load-more-button">
-            Load More Reviews
-          </button>
-        </div>
-      )}
     </div>
   );
 };

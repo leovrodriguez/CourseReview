@@ -1,63 +1,58 @@
 // src/hooks/useReviews.js
-import { useState, useEffect } from 'react';
-import { getCourseReviews } from '../api/ratings';
+import { useState, useEffect, useCallback } from 'react';
+import { getCourseReviews } from '../api/courses';
 
-export const useReviews = (courseId, initialLimit = 5) => {
+export const useReviews = (courseId) => {
   const [reviews, setReviews] = useState([]);
   const [stats, setStats] = useState({
-    review_count: 0,
     avg_rating: 0,
-    min_rating: 0,
-    max_rating: 0
+    review_count: 0,
+    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [limit, setLimit] = useState(initialLimit);
-  const [offset, setOffset] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [refreshIndex, setRefreshIndex] = useState(0);
+
+  const fetchReviews = useCallback(async () => {
+    console.log('useReviews hook - courseId:', courseId);
+    
+    if (!courseId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const data = await getCourseReviews(courseId);
+      console.log('useReviews - received review data:', data);
+      
+      setReviews(data.reviews || []);
+      setStats({
+        avg_rating: data.stats?.avg_rating || 0,
+        review_count: data.stats?.review_count || 0,
+        distribution: data.stats?.distribution || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+      });
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching reviews:', err);
+      setError(err.message || 'Failed to load reviews');
+      setReviews([]);
+      setStats({
+        avg_rating: 0,
+        review_count: 0,
+        distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [courseId]);
 
   useEffect(() => {
-    const fetchReviews = async () => {
-      if (!courseId) return;
-      
-      setLoading(true);
-      try {
-        const data = await getCourseReviews(courseId, limit, offset);
-        
-        setReviews(data.reviews || []);
-        setStats(data.stats || {});
-        
-        if (data.pagination) {
-          setTotal(data.pagination.total);
-        }
-        
-        setError(null);
-      } catch (err) {
-        setError(err.message || 'Error fetching reviews');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchReviews();
-  }, [courseId, limit, offset, refreshIndex]);
+  }, [fetchReviews]);
 
-  const refresh = () => setRefreshIndex(prev => prev + 1);
-  
-  const loadMore = () => {
-    setLimit(prevLimit => prevLimit + initialLimit);
+  const refreshReviews = () => {
+    fetchReviews();
   };
-  
-  const hasMore = reviews.length < total;
 
-  return {
-    reviews,
-    stats,
-    loading,
-    error,
-    refresh,
-    loadMore,
-    hasMore
-  };
+  return { reviews, stats, loading, error, refreshReviews };
 };

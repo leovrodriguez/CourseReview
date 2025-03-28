@@ -440,9 +440,9 @@ class PostgresVectorDB(VectorDB):
                 
         return None
 
-    def find_by_id(self, id):
+    def get_user_by_id(self, id):
         """
-        Find a user by their id.
+        Get a user by their id.
         
         Args:
             email (str): The user's id to search for
@@ -465,9 +465,9 @@ class PostgresVectorDB(VectorDB):
                 
         return None
         
-    def find_by_username(self, username):
+    def get_user_by_username(self, username):
         """
-        Find a user by their username.
+        Get a user by their username.
         
         Args:
             username (str): The username to search for
