@@ -1,19 +1,24 @@
-import { useEffect } from 'react';
-import { useDebounce } from '../../hooks/useDebounce';
+import React, { useState } from 'react';
 
 export const FilterBar = ({ filters, onFiltersChange }) => {
-  const handleFilterChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value };
-    onFiltersChange(newFilters);
+  const [localFilters, setLocalFilters] = useState(filters);
+
+  const handleInputChange = (key, value) => {
+    setLocalFilters({ ...localFilters, [key]: value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault(); // Prevent form submission from reloading the page
+    onFiltersChange(localFilters); // Apply the filters globally
   };
 
   return (
-    <div className="filter-bar">
+    <form className="filter-bar" onSubmit={handleSubmit}>
       <div className="filter-section">
         <div className="filter-section-title">RateMyCourse Minimum Star Rating</div>
         <select
-          value={filters.internalRating || ''}
-          onChange={(e) => handleFilterChange('internalRating', e.target.value)}
+          value={localFilters.internalRating || ''}
+          onChange={(e) => handleInputChange('internalRating', e.target.value)}
         >
           <option value="">Any Rating</option>
           {[1, 2, 3, 4, 5].map((rating) => (
@@ -27,8 +32,8 @@ export const FilterBar = ({ filters, onFiltersChange }) => {
       <div className="filter-section">
         <div className="filter-section-title">Provider Minimum Star Rating</div>
         <select
-          value={filters.externalRating || ''}
-          onChange={(e) => handleFilterChange('externalRating', e.target.value)}
+          value={localFilters.externalRating || ''}
+          onChange={(e) => handleInputChange('externalRating', e.target.value)}
         >
           <option value="">Any Rating</option>
           {[1, 2, 3, 4, 5].map((rating) => (
@@ -40,33 +45,40 @@ export const FilterBar = ({ filters, onFiltersChange }) => {
       </div>
 
       <div className="filter-section">
-        <div className="filter-section-title">Minimum Review Counts</div>
+        <div className="filter-section-title">RateMyCourse Minimum Review Counts</div>
         <input
           type="number"
-          placeholder="Minimum RateMyCourse Ratings"
-          value={filters.internalReviewCount || ''}
-          onChange={(e) => handleFilterChange('internalReviewCount', e.target.value)}
+          placeholder="Minimum Ratings"
+          value={localFilters.internalReviewCount || ''}
+          onChange={(e) => handleInputChange('internalReviewCount', e.target.value)}
         />
+      </div>
+      <div className="filter-section">
+      <div className="filter-section-title">Provider Minimum Review Counts</div>
         <input
           type="number"
-          placeholder="Minimum Provider Ratings"
-          value={filters.externalReviewCount || ''}
-          onChange={(e) => handleFilterChange('externalReviewCount', e.target.value)}
+          placeholder="Minimum Ratings"
+          value={localFilters.externalReviewCount || ''}
+          onChange={(e) => handleInputChange('externalReviewCount', e.target.value)}
         />
       </div>
 
       <div className="filter-section">
         <div className="filter-section-title">Price</div>
         <select
-          value={filters.isFree || ''}
-          onChange={(e) => handleFilterChange('isFree', e.target.value)}
+          value={localFilters.isFree || ''}
+          onChange={(e) => handleInputChange('isFree', e.target.value)}
         >
           <option value="">Any Price</option>
           <option value="true">Free Courses</option>
           <option value="false">Paid Courses</option>
         </select>
       </div>
-    </div>
+
+      <button type="submit" className="apply-filters-button">
+        Apply Filters
+      </button>
+    </form>
   );
 };
 
