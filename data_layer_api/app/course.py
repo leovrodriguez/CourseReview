@@ -32,10 +32,6 @@ def get_course_by_id(course_id):
         if not course:
             return jsonify({"error": "Course not found"}), 404
             
-        # Fix Coursera URL if needed - temporary handler for issue #25
-        if course['platform'] == 'coursera' and not course['url'].startswith('http'):
-            course['url'] = f"https://www.coursera.org{course['url']}"
-            
         return jsonify(course)
     except Exception as e:
         return jsonify({"error": str(e)}), 500

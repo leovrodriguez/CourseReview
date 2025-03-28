@@ -85,15 +85,10 @@ class PostgresVectorDB(VectorDB):
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
-                learning_journey_id UUID REFERENCES learning_journeys(id) ON DELETE CASCADE,
                 title TEXT NOT NULL,
                 description TEXT NOT NULL,
                 embedding vector(768) NOT NULL, -- Added vector embedding
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                CHECK (
-                    (course_id IS NOT NULL AND learning_journey_id IS NULL) OR 
-                    (learning_journey_id IS NOT NULL AND course_id IS NULL)
-                )
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
             -- Replies Table
@@ -111,7 +106,7 @@ class PostgresVectorDB(VectorDB):
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 object_id UUID NOT NULL,
-                object_type TEXT NOT NULL CHECK (object_type IN ('learning_journey', 'discussion', 'reply')), 
+                object_type TEXT NOT NULL CHECK (object_type IN ('discussion', 'reply')), 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE (user_id, object_id, object_type)
             );
