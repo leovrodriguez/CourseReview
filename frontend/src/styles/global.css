@@ -47,7 +47,6 @@ body {
 .app-content {
   flex: 1;
   padding: 2rem;
-  max-width: 1200px;
   margin: 0 auto;
   width: 100%;
 }
@@ -1021,9 +1020,9 @@ button:disabled {
 
 /* Sort Bar */
 
-.sort-bar-container {
+.sort-filter-bar-container {
   display: flex;
-  align-items: center;
+  align-items: right;
   margin-bottom: 1.5rem;
   max-width: 400px;
 }
@@ -1051,6 +1050,42 @@ button:disabled {
   font-size: 1.5rem;
   color: #95a5a6;
   line-height: 1;
+}
+
+/* Filtering */
+
+.filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.filter-bar select,
+.filter-bar input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.rating-filters,
+.count-filters,
+.price-filter {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-section-title {
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.course-filter-container {
+  display: grid;
+  gap: 20px;
+  grid-template-columns:1fr 4fr;
 }
 
 /* Add to src/styles/global.css */
