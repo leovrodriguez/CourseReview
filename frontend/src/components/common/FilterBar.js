@@ -1,8 +1,7 @@
-// src/components/common/FilterBar.js
-import { useState } from 'react';
+import { useEffect } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export const FilterBar = ({ filters, onFiltersChange }) => {
-
   const handleFilterChange = (key, value) => {
     const newFilters = { ...filters, [key]: value };
     onFiltersChange(newFilters);
@@ -11,7 +10,7 @@ export const FilterBar = ({ filters, onFiltersChange }) => {
   return (
     <div className="filter-bar">
       <div className="filter-section">
-        <div className="filter-section-title">Internal Rating</div>
+        <div className="filter-section-title">RateMyCourse Minimum Star Rating</div>
         <select
           value={filters.internalRating || ''}
           onChange={(e) => handleFilterChange('internalRating', e.target.value)}
@@ -19,14 +18,14 @@ export const FilterBar = ({ filters, onFiltersChange }) => {
           <option value="">Any Rating</option>
           {[1, 2, 3, 4, 5].map((rating) => (
             <option key={`int-${rating}`} value={rating}>
-              {rating}+ stars
+              {rating} stars
             </option>
           ))}
         </select>
       </div>
 
       <div className="filter-section">
-        <div className="filter-section-title">Platform Rating</div>
+        <div className="filter-section-title">Provider Minimum Star Rating</div>
         <select
           value={filters.externalRating || ''}
           onChange={(e) => handleFilterChange('externalRating', e.target.value)}
@@ -34,37 +33,37 @@ export const FilterBar = ({ filters, onFiltersChange }) => {
           <option value="">Any Rating</option>
           {[1, 2, 3, 4, 5].map((rating) => (
             <option key={`ext-${rating}`} value={rating}>
-              {rating}+ stars
+              {rating} stars
             </option>
           ))}
         </select>
       </div>
 
       <div className="filter-section">
-        <div className="filter-section-title">Review Counts</div>
+        <div className="filter-section-title">Minimum Review Counts</div>
         <input
           type="number"
-          placeholder="Minimum Reviews"
-          value={filters.reviewCount || ''}
-          onChange={(e) => handleFilterChange('reviewCount', e.target.value)}
+          placeholder="Minimum RateMyCourse Ratings"
+          value={filters.internalReviewCount || ''}
+          onChange={(e) => handleFilterChange('internalReviewCount', e.target.value)}
         />
         <input
           type="number"
-          placeholder="Platform Reviews"
-          value={filters.platformReviews || ''}
-          onChange={(e) => handleFilterChange('platformReviews', e.target.value)}
+          placeholder="Minimum Provider Ratings"
+          value={filters.externalReviewCount || ''}
+          onChange={(e) => handleFilterChange('externalReviewCount', e.target.value)}
         />
       </div>
 
       <div className="filter-section">
         <div className="filter-section-title">Price</div>
         <select
-          value={filters.priceType || ''}
-          onChange={(e) => handleFilterChange('priceType', e.target.value)}
+          value={filters.isFree || ''}
+          onChange={(e) => handleFilterChange('isFree', e.target.value)}
         >
           <option value="">Any Price</option>
-          <option value="free">Free Courses</option>
-          <option value="paid">Paid Courses</option>
+          <option value="true">Free Courses</option>
+          <option value="false">Paid Courses</option>
         </select>
       </div>
     </div>

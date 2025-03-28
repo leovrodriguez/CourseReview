@@ -1,6 +1,7 @@
 // src/hooks/useCourses.js
 import { useState, useEffect , useCallback} from 'react';
 import { fetchAllCourses, searchCourses } from '../api/courses';
+import {getCourseReviews} from '../api/ratings'
 
 export const useCourses = (initialQuery = '', initialSort = {}) => {
   const [courses, setCourses] = useState([]);
@@ -12,9 +13,9 @@ export const useCourses = (initialQuery = '', initialSort = {}) => {
   const [filters, setFilters] = useState({
     internalRating: null,
     externalRating: null,
-    reviewCount: null,
-    platformReviews: null,
-    priceType: null
+    internalReviewCount: null,
+    externalReviewCount: null, 
+    isFree: null,
   });
   
   // Pagination state
@@ -47,40 +48,53 @@ export const useCourses = (initialQuery = '', initialSort = {}) => {
     }
   };
 
+  // loads internal reviews
+  const preloadReviews = async (courses) => {
+    const coursesWithReviews = await Promise.all(
+      courses.map(async (course) => {
+        const reviews = await getCourseReviews(course.id);
+        return { ...course, reviews };
+      })
+    );
+    return coursesWithReviews;
+  };
+
   const applyFilters = useCallback((courses) => {
-    return courses.filter(course => {
-      // Internal rating filter
-      if (filters.internalRating && 
-          course.internalRatings?.avg_rating < filters.internalRating) {
+    return courses.filter((course) => {
+      // Internal minimum star rating filter
+      if (
+        filters.internalRating &&
+        course.reviews.stats.avg_rating < filters.internalRating
+      ) {
         return false;
       }
-      
-      // External rating filter
-      if (filters.externalRating && 
-          course.rating < filters.externalRating) {
+
+      // External minimum star rating filter
+      if (filters.externalRating && course.rating < filters.externalRating) {
         return false;
       }
-      
-      // Review count filter
-      if (filters.reviewCount && 
-          course.internalRatings?.total_reviews < filters.reviewCount) {
+
+      // Internal Review count filter
+      if (
+        filters.internalReviewCount &&
+        course.reviews.stats.review_count < filters.internalReviewCount
+      ) {
         return false;
       }
-      
-      // Platform reviews filter
-      if (filters.platformReviews && 
-          course.rating < filters.platformReviews) {
+
+      // External Review count filter
+      if (
+        filters.externalReviewCount &&
+        course.num_ratings < filters.externalReviewCount
+      ) {
         return false;
       }
-      
-      // Price type filter
-      if (filters.priceType === 'free' && course.price > 0) {
+
+      // Is Free filter
+      if (filters.isFree == "true" && !course.is_free) {
         return false;
       }
-      if (filters.priceType === 'paid' && course.price === 0) {
-        return false;
-      }
-      
+
       return true;
     });
   }, [filters]);
@@ -90,30 +104,36 @@ export const useCourses = (initialQuery = '', initialSort = {}) => {
       setLoading(true);
       try {
         let data;
-        
+
         if (query && query.trim() !== '') {
           // For semantic search, we'll get all results at once and paginate client-side
           data = await searchCourses(query, 50); // Get a larger batch for client-side pagination
-          data = applyFilters(data)
+          data = await preloadReviews(data); // Preload reviews
+          data = applyFilters(data);
           data = applySort(data);
-          
+
           // Client-side pagination - apply after receiving all results
           const offset = (page - 1) * pageSize;
           const paginatedData = data.slice(offset, offset + pageSize);
-          
+
           setCourses(paginatedData);
           setTotalCourses(data.length);
         } else {
           // For regular fetching, use the server pagination
           const offset = (page - 1) * pageSize;
           data = await fetchAllCourses(pageSize, offset);
-          data = applyFilters(data)
+          data = await preloadReviews(data); // Preload reviews
+          data = applyFilters(data);
           data = applySort(data);
-          
+
           if (Array.isArray(data)) {
             setCourses(data);
             // Estimate total based on whether we got a full page
-            setTotalCourses(data.length < pageSize ? offset + data.length : offset + data.length + pageSize);
+            setTotalCourses(
+              data.length < pageSize
+                ? offset + data.length
+                : offset + data.length + pageSize
+            );
           } else if (data && typeof data === 'object') {
             // Response with pagination metadata
             if (Array.isArray(data.courses)) {
