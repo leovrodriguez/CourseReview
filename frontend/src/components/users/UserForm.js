@@ -9,6 +9,8 @@ const UserForm = ({ onSubmit }) => {
   const [usernameError, setUsernameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [isTokenValid, setIsTokenValid] = useState(null);  // Track token validity state
+  const [loading, setLoading] = useState(true);  // Loading state during validation
 
   // async function to validate username
   const validateUsername = async () => {
@@ -119,7 +121,7 @@ const UserForm = ({ onSubmit }) => {
     setPasswordError("");
     return true;
   };
-
+ 
   const handleSubmit = async (e) => {
     e.preventDefault();
 

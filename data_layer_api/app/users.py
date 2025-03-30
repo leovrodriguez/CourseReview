@@ -6,12 +6,37 @@ import uuid
 import secrets
 import base64
 import hashlib
-from flask_jwt_extended import create_access_token, get_jwt_identity
+from flask_jwt_extended import create_access_token, get_jwt_identity, decode_token
 from datetime import timedelta
 import re
 
 
 users_bp = Blueprint('users', __name__)
+
+def get_user_id(token):
+    # Decode the JWT token to extract the user ID
+    try:
+        decoded_token = decode_token(token)
+        user_id = decoded_token.get('identity')
+        return user_id
+    except Exception as e:
+        # Handle token decoding errors (e.g., expired or invalid token)
+        return None
+
+@users_bp.route('/validateToken', methods=['POST'])
+def validate_token():
+    payload = request.get_json()
+    token = payload["token"]
+
+    try:
+        # Decode the token and check for validity
+        decoded_token = decode_token(token)
+        
+        # If decoding was successful, the token is valid and has not expired
+        return jsonify({"isValid": True})
+    except Exception as e:
+        # If decoding fails (e.g., expired or tampered token), handle it here
+        return jsonify({"isValid": False})
 
 @users_bp.route('/', methods=['GET'])
 def get_users():
@@ -153,6 +178,18 @@ def insert_user():
 
     # now create the login token
     access_token = create_access_token(identity=str(user_id), expires_delta=timedelta(hours=1))
+
+    try:
+        # Decode the token and check for validity
+        decoded_token = decode_token(access_token)
+        
+        # If decoding was successful, the token is valid and has not expired
+        print('valid token')
+    except Exception as e:
+        # If decoding fails (e.g., expired or tampered token), handle it here
+        print('invalid token')
+
+    print(user_id, get_user_id(access_token))
 
     # Implement search logic here
     return jsonify({"message": "User Inserted Successfully",
