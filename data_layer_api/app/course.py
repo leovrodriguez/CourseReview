@@ -4,9 +4,9 @@ from classes.course import Course, CourseReview
 from classes.discussion import Discussion
 from classes.reply import Reply
 from embedder.embedder import get_embedding, embed_course_vector, embed_discussion_vector, embed_reply_vector
-from classes.reply import Reply
-from embedder.embedder import get_embedding, embed_course_vector, embed_discussion_vector, embed_reply_vector
+from flask_jwt_extended import decode_token
 from uuid import UUID
+from protected import validate_token, get_user_id
 course_bp = Blueprint('course', __name__)
 
 @course_bp.route('/', methods=['GET'])
@@ -204,6 +204,28 @@ def query_course():
     database.close()
     
     return jsonify({"courses": courses})
+
+@course_bp.route('/review', methods=['POST'])
+def review_course():
+    payload = request.get_json()
+
+    # validate the user
+    token = payload["token"]
+
+    user_id = get_user_id(token)
+    if token is None:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    course_id = payload.get("course_id")
+    rating = payload.get("rating")
+    description = payload.get("description", None)
+    review = CourseReview(user_id, course_id, rating, description)
+    
+    database = get_vector_db()
+    database.insert_course_review(review)
+    database.close()
+
+    return jsonify({"message": "Course Review Inserted"})
 
 @course_bp.route('/clear', methods=['POST'])
 def clear_courses():

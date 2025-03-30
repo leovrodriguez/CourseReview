@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getCourseDetails } from '../api';
 import { useReviews } from '../hooks/useReviews';
 
-const ReviewCourse = () => {
-  const { courseId, userId } = useParams();
+const RateCourse = () => {
+  const { courseId } = useParams();
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [review, setReview] = useState(5);
@@ -31,8 +31,8 @@ const ReviewCourse = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await submitReview(userId, courseId, review, reviewText);
-      alert('Review submitted successfully!');
+      await submitRating(courseId, rating, reviewText);
+      alert('Rating submitted successfully!');
       navigate(-1); // Go back to previous page
     } catch (err) {
       setError(`Failed to submit review: ${err.message}`);
