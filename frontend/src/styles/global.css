@@ -1757,3 +1757,778 @@ button:disabled {
 .review-error {
   color: #e74c3c;
 }
+
+/* Add these styles to your global.css file */
+
+/* Trash icon button styling */
+.trash-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  margin-top: 6px;
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+.trash-icon-button:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
+}
+
+.trash-icon-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(231, 76, 60, 0.3);
+}
+
+.trash-icon-button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.trash-icon-button svg {
+  display: block;
+}
+
+/* Improved confirmation modal styles - add to global.css */
+
+/* Modal overlay - darkens the entire screen */
+.confirmation-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+/* Modal content box */
+.confirmation-content {
+  background-color: white;
+  padding: 25px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: modalAppear 0.3s ease-out;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.confirmation-content h3 {
+  color: #2c3e50;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+  border-bottom: 1px solid #f1f1f1;
+  padding-bottom: 10px;
+}
+
+.confirmation-content p {
+  color: #34495e;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.confirmation-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+
+.cancel-button {
+  padding: 8px 15px;
+  background-color: #ecf0f1;
+  color: #7f8c8d;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: #dde4e6;
+}
+
+.confirm-button {
+  padding: 8px 15px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.confirm-button:hover {
+  background-color: #c0392b;
+}
+
+.confirm-button:active {
+  transform: scale(0.98);
+}
+
+.confirm-button:disabled,
+.cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Error Popup Styles - Add to your global.css file */
+
+.error-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.error-popup-content {
+  background-color: white;
+  padding: 25px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: popupAppear 0.3s ease-out;
+  text-align: center;
+  position: relative;
+}
+
+@keyframes popupAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.error-popup-content h3 {
+  color: #e74c3c;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+.error-popup-content p {
+  color: #34495e;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  font-size: 1.1rem;
+}
+
+.close-error-button {
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.close-error-button:hover {
+  background-color: #2980b9;
+}
+
+/* src/styles/discussions.css */
+
+/* Discussions container */
+.course-discussions {
+  margin-top: 20px;
+}
+
+/* Discussions header */
+.discussions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.discussions-header h2 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.post-discussion-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.post-discussion-button:hover {
+  background-color: #2980b9;
+}
+
+/* Discussion form */
+.discussion-form-container {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.discussion-form h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.discussion-title-container {
+  margin-bottom: 15px;
+}
+
+.discussion-title-container label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.discussion-title-container input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Write/Preview tabs */
+.discussion-tabs {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 15px;
+}
+
+.discussion-tabs .tab-button {
+  padding: 10px 15px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+  color: #7f8c8d;
+}
+
+.discussion-tabs .tab-button:hover {
+  color: #3498db;
+}
+
+.discussion-tabs .tab-button.active {
+  color: #3498db;
+  border-bottom-color: #3498db;
+}
+
+/* Discussion toolbar */
+.discussion-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.add-course-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #f0f0f0;
+  color: #2c3e50;
+  border: 1px solid #ddd;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.add-course-button:hover {
+  background-color: #e0e0e0;
+}
+
+/* Discussion textarea */
+.discussion-text-container {
+  margin-bottom: 15px;
+}
+
+.discussion-text-container textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 14px;
+  min-height: 150px;
+}
+
+.description-help {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+.description-help code {
+  background-color: #f0f0f0;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+/* Discussion preview */
+.discussion-preview-container {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 15px;
+  min-height: 150px;
+  margin-bottom: 15px;
+}
+
+.discussion-preview-container h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.discussion-preview-content {
+  color: #34495e;
+  line-height: 1.6;
+}
+
+.discussion-preview-content em {
+  color: #95a5a6;
+}
+
+/* Submit button */
+.submit-discussion-button {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.submit-discussion-button:hover {
+  background-color: #27ae60;
+}
+
+.submit-discussion-button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+/* Error/Success messages */
+.discussion-submit-error {
+  background-color: #fdedee;
+  color: #e74c3c;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.discussion-submit-success {
+  background-color: #e8f8f5;
+  color: #2ecc71;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+/* Course reference styling */
+.course-reference {
+  display: inline-flex;
+  align-items: center;
+  background-color: #eef7fb;
+  border: 1px solid #d1e9f6;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin: 0 2px;
+  white-space: nowrap;
+}
+
+.course-reference-icon {
+  margin-right: 4px;
+}
+
+.course-reference-title {
+  font-size: 13px;
+  color: #3498db;
+  font-weight: 500;
+}
+
+/* Discussions list */
+.discussions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.discussion-item {
+  background-color: white;
+  border-radius: 6px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.discussion-header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.discussion-title {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #2c3e50;
+}
+
+.discussion-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.discussion-author {
+  font-weight: 600;
+  color: #34495e;
+}
+
+.discussion-date {
+  color: #7f8c8d;
+}
+
+.discussion-content {
+  margin-bottom: 15px;
+  color: #34495e;
+  line-height: 1.6;
+}
+
+.discussion-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.reply-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f8f9fa;
+  color: #34495e;
+  border: 1px solid #e0e0e0;
+  padding: 7px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.reply-button:hover {
+  background-color: #edf2f7;
+}
+
+.reply-button svg {
+  color: #95a5a6;
+}
+
+/* Empty state */
+.no-discussions {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.no-discussions p {
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+/* Loading and error states */
+.discussion-loading,
+.discussion-error {
+  text-align: center;
+  padding: 30px;
+  color: #7f8c8d;
+}
+
+.discussion-error {
+  color: #e74c3c;
+}
+
+/* Course selector modal */
+.course-selector-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.course-selector-content {
+  background-color: white;
+  padding: 25px;
+  border-radius: 8px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.course-selector-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #2c3e50;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+.course-selector-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.selector-add-button {
+  padding: 8px 15px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.selector-add-button:hover {
+  background-color: #2980b9;
+}
+
+.selector-cancel-button {
+  padding: 8px 15px;
+  background-color: #f0f0f0;
+  color: #7f8c8d;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.selector-cancel-button:hover {
+  background-color: #e0e0e0;
+}
+
+/* Course search styling */
+.course-search-container {
+  margin-bottom: 20px;
+}
+
+.course-search-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.course-search-input:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+.course-search-error {
+  color: #e74c3c;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.course-search-loading,
+.no-courses-found,
+.course-search-instructions {
+  padding: 20px;
+  text-align: center;
+  color: #7f8c8d;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+/* Course results list */
+.course-results-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.course-result-item {
+  display: flex;
+  padding: 15px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.course-result-item:hover {
+  background-color: #f5f9fc;
+}
+
+.course-result-item:last-child {
+  border-bottom: none;
+}
+
+.course-result-image {
+  width: 60px;
+  height: 60px;
+  margin-right: 15px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.course-result-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholder-image {
+  width: 100%;
+  height: 100%;
+  background-color: #3498db;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.course-result-info {
+  flex: 1;
+}
+
+.course-result-title {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+.course-result-platform {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  color: #3498db;
+}
+
+.course-result-authors {
+  margin: 0;
+  font-size: 13px;
+  color: #7f8c8d;
+}
+
+/* Referenced Courses Styles */
+.referenced-courses-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.referenced-course-chip {
+  display: inline-flex;
+  align-items: center;
+  background-color: #eef7fb;
+  border: 1px solid #d1e9f6;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+}
+
+.referenced-course-chip span {
+  margin-right: 0.5rem;
+  color: #3498db;
+}
+
+.remove-referenced-course-btn {
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+}
+
+.remove-referenced-course-btn:hover {
+  background-color: #f1f1f1;
+}

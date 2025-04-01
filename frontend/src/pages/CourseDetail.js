@@ -1,9 +1,11 @@
-// src/pages/CourseDetail.js
+// src/pages/CourseDetail.js - Updated with Discussions Tab
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCourseDetails, submitCourseReview } from '../api/courses';
 import { useReviews } from '../hooks/useReviews';
 import CourseReviews from '../components/courses/CourseReviews';
+import CourseDiscussions from '../components/courses/CourseDiscussions';
+import { API_BASE_URL } from '../api/config';
 
 const CourseDetail = () => {
   // Get the course ID from URL params
@@ -30,6 +32,10 @@ const CourseDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  
+  // Error popup state
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorPopupMessage, setErrorPopupMessage] = useState('');
   
   // Check if user is logged in and get user ID
   useEffect(() => {
@@ -125,6 +131,11 @@ const CourseDetail = () => {
     }
   };
 
+  const closeErrorPopup = () => {
+    setShowErrorPopup(false);
+    setErrorPopupMessage('');
+  };
+
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     
@@ -147,28 +158,43 @@ const CourseDetail = () => {
       
       console.log('Submitting review with userId:', userId);
       
-      // Use the submitCourseReview function with the correct parameters order
-      await submitCourseReview(userId, courseId, rating, review.trim() || null);
-      
-      // Show success message
-      setSubmitSuccess(true);
-      
-      // Clear form
-      setRating(0);
-      setReview('');
-      
-      // Refresh reviews list
-      refreshReviews();
-      
-      // Close form after a delay
-      setTimeout(() => {
-        setShowReviewForm(false);
-        setSubmitSuccess(false);
-      }, 2000);
-      
-    } catch (err) {
-      console.error('Review submission error:', err);
-      setSubmitError(err.message || 'Failed to submit review');
+      try {
+        // Try to use the API function first
+        await submitCourseReview(userId, courseId, rating, review.trim() || null);
+        
+        // Show success message
+        setSubmitSuccess(true);
+        
+        // Clear form
+        setRating(0);
+        setReview('');
+        
+        // Refresh reviews list
+        refreshReviews();
+        
+        // Close form after a delay
+        setTimeout(() => {
+          setShowReviewForm(false);
+          setSubmitSuccess(false);
+        }, 2000);
+      } catch (error) {
+        console.error('Error submitting review:', error);
+        
+        // Check if the error message indicates the user has already reviewed this course
+        if (error.message && error.message.includes('already reviewed')) {
+          // Show error popup for duplicate review
+          setErrorPopupMessage('You have already reviewed this course. You can only submit one review per course.');
+          setShowErrorPopup(true);
+          
+          // Close the form after a delay
+          setTimeout(() => {
+            setShowReviewForm(false);
+          }, 1000);
+        } else {
+          // Show general error message for other errors
+          setSubmitError(error.message || 'Failed to submit review');
+        }
+      }
     } finally {
       setSubmitting(false);
     }
@@ -209,6 +235,19 @@ const CourseDetail = () => {
 
   return (
     <div className="course-detail-page">
+      {/* Error Popup Modal */}
+      {showErrorPopup && (
+        <div className="error-popup-overlay">
+          <div className="error-popup-content">
+            <h3>Already Reviewed</h3>
+            <p>{errorPopupMessage}</p>
+            <button onClick={closeErrorPopup} className="close-error-button">
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+      
       <button onClick={handleBackClick} className="back-button">
         ← Back to Courses
       </button>
@@ -387,10 +426,7 @@ const CourseDetail = () => {
             
             {activeTab === 'discussions' && (
               <div className="discussions-tab">
-                <h2>Discussions</h2>
-                <p className="coming-soon-message">
-                  Discussion functionality is coming soon. Stay tuned!
-                </p>
+                <CourseDiscussions courseId={courseId} />
               </div>
             )}
           </div>

@@ -1,9 +1,14 @@
 // src/components/courses/CourseReviews.js
-import React from 'react';
+import React, { useState } from 'react';
+import { API_BASE_URL } from '../../api/config';
 import { useReviews } from '../../hooks/useReviews';
 
 const CourseReviews = ({ courseId }) => {
-  const { reviews, loading, error, stats } = useReviews(courseId);
+  const { reviews, loading, error, stats, refreshReviews } = useReviews(courseId);
+  const [deleteError, setDeleteError] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState(null);
 
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -31,6 +36,72 @@ const CourseReviews = ({ courseId }) => {
     return distribution;
   };
 
+  // Check if the current user is the owner of a review
+  const isReviewOwner = (review) => {
+    if (!review || !review.user_id) return false;
+    
+    try {
+      const userString = localStorage.getItem('user');
+      if (!userString) return false;
+      
+      const userData = JSON.parse(userString);
+      return userData.id === review.user_id;
+    } catch (err) {
+      console.error('Error checking review ownership:', err);
+      return false;
+    }
+  };
+
+  // Request confirmation for deleting a review
+  const requestDeleteConfirmation = (review) => {
+    setReviewToDelete(review);
+    setShowConfirmation(true);
+  };
+
+  // Cancel deletion
+  const cancelDelete = () => {
+    setShowConfirmation(false);
+    setReviewToDelete(null);
+  };
+
+  // Confirm and handle deleting a review
+  const confirmDelete = async () => {
+    if (!reviewToDelete) return;
+    
+    const reviewId = reviewToDelete.id;
+    setDeleteLoading(true);
+    setDeleteError(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('You must be logged in to delete a review');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/course/${courseId}/review/${reviewId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete review');
+      }
+
+      // Refresh the reviews list after deletion
+      refreshReviews();
+    } catch (err) {
+      console.error('Error deleting review:', err);
+      setDeleteError(err.message);
+    } finally {
+      setDeleteLoading(false);
+      setShowConfirmation(false);
+      setReviewToDelete(null);
+    }
+  };
+
   if (loading) {
     return <div className="review-loading">Loading reviews...</div>;
   }
@@ -53,6 +124,38 @@ const CourseReviews = ({ courseId }) => {
 
   return (
     <div className="course-reviews">
+      {deleteError && (
+        <div className="review-error" style={{ marginBottom: '15px' }}>
+          {deleteError}
+        </div>
+      )}
+      
+      {/* Confirmation Modal */}
+      {showConfirmation && reviewToDelete && (
+        <div className="confirmation-modal">
+          <div className="confirmation-content">
+            <h3>Confirm Deletion</h3>
+            <p>Are you sure you want to delete this review? This action cannot be undone.</p>
+            <div className="confirmation-buttons">
+              <button 
+                className="cancel-button" 
+                onClick={cancelDelete}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button 
+                className="confirm-button" 
+                onClick={confirmDelete}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="reviews-summary">
         <div className="average-rating">
           <span className="avg-rating-value">{parseFloat(stats.avg_rating).toFixed(1)}</span>
@@ -93,6 +196,26 @@ const CourseReviews = ({ courseId }) => {
               <div className="review-rating">
                 <span className="rating-stars">{renderStars(review.rating)}</span>
                 <span className="rating-value">{review.rating}.0</span>
+                
+                {/* Show trash icon button for user's own reviews */}
+                {isReviewOwner(review) && (
+                  <button 
+                    className="trash-icon-button" 
+                    onClick={() => requestDeleteConfirmation(review)}
+                    disabled={deleteLoading}
+                    aria-label="Delete review"
+                    title="Delete review"
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
             

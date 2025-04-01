@@ -1,6 +1,10 @@
 import requests
 from typing import List
 from classes.course import Course
+from classes.discussion import Discussion
+
+OLLAMA_EMBED_ENDPOINT = "http://ollama:11434/api/embed"
+OLLAMA_MODEL_PULL_ENDPOINT = "http://ollama:11434/api/pull"
 
 """
 Embedder module for courses and queries
@@ -29,11 +33,40 @@ def course_to_string(course: Course) -> str:
     if course.description:
         parts.append(f"A description of this course is: {course.description}")
     
-    return " ".join(parts)    
+    return " ".join(parts)  
 
+def embed_discussion_vector(discussion: Discussion) -> List[float]:
+    """
+    Return an embedded vector for a discussion based on relevant semantic fields
+    
+    Args:
+        discussion (Discussion): The discussion object to embed
+        
+    Returns:
+        List[float]: The embedding vector for the discussion
+    """
+    return get_embedding(discussion_to_string(discussion))
 
-OLLAMA_EMBED_ENDPOINT = "http://ollama:11434/api/embed"
-OLLAMA_MODEL_PULL_ENDPOINT = "http://ollama:11434/api/pull"
+def discussion_to_string(discussion: Discussion) -> str:
+    """
+    Parses relevant fields from discussion object to a string for embedding
+    
+    Args:
+        discussion (Discussion): The discussion object to parse
+        
+    Returns:
+        str: A string representation of the discussion for embedding
+    """
+    parts = [
+        f"Discussion titled: {discussion.title}",
+        f"Discussion content: {discussion.description}"
+    ]
+    
+    # If the discussion is associated with a course, include that information
+    if discussion.course_id:
+        parts.append(f"This discussion is related to a course with ID: {discussion.course_id}")
+    
+    return " ".join(parts)  
 
 def get_embedding(query: str) -> List[float]:
     """
