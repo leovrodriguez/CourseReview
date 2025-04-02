@@ -99,6 +99,7 @@ class PostgresVectorDB(VectorDB):
                 user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 discussion_id UUID NOT NULL REFERENCES discussions(id) ON DELETE CASCADE,
                 parent_reply_id UUID REFERENCES replies(id) ON DELETE CASCADE,
+                parent_reply_id UUID REFERENCES replies(id) ON DELETE CASCADE,
                 text TEXT NOT NULL,
                 embedding vector(768) NOT NULL, -- Added vector embedding
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -944,6 +945,7 @@ class PostgresVectorDB(VectorDB):
             
         return reply_id
 
+    
     def get_replies_by_discussion(self, discussion_id):
         """
         Get all replies for a specific discussion.

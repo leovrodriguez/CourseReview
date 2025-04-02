@@ -4,6 +4,8 @@ from classes.course import Course, CourseReview
 from classes.discussion import Discussion
 from classes.reply import Reply
 from embedder.embedder import get_embedding, embed_course_vector, embed_discussion_vector, embed_reply_vector
+from classes.reply import Reply
+from embedder.embedder import get_embedding, embed_course_vector, embed_discussion_vector, embed_reply_vector
 from uuid import UUID
 course_bp = Blueprint('course', __name__)
 
