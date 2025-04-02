@@ -1159,7 +1159,7 @@ button:disabled {
 }
 
 .register-button:hover {
-  color: #2980b9;
+  color: #ffffff;
 }
 
 /* Registration page styles */
@@ -1193,7 +1193,7 @@ button:disabled {
 }
 
 .login-button:hover {
-  color: #2980b9;
+  color: #ffffff;
 }
 
 .form-success {
@@ -2532,3 +2532,562 @@ button:disabled {
 .remove-referenced-course-btn:hover {
   background-color: #f1f1f1;
 }
+
+.reply-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.reply-count:hover {
+  color: #333;
+}
+
+.reply-count svg {
+  stroke: #666;
+}
+
+.reply-count:hover svg {
+  stroke: #333;
+}
+
+/* Additional CSS for threaded replies */
+
+/* Reply thread container */
+.reply-thread {
+  margin-bottom: 16px;
+}
+
+/* Child replies styling - deeper nesting */
+.child-replies {
+  margin-left: 20px;
+  padding-left: 15px;
+  border-left: 2px solid #e0e0e0;
+}
+
+/* Nested reply form */
+.nested-reply-form {
+  margin-top: 12px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+}
+
+.nested-reply-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 10px;
+}
+
+.reply-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.submit-nested-reply-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.submit-nested-reply-button:hover {
+  background-color: #2980b9;
+}
+
+.cancel-reply-button {
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ccc;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.cancel-reply-button:hover {
+  background-color: #f1f1f1;
+}
+
+/* Indentation styles */
+.reply-item {
+  position: relative;
+}
+
+/* Hover effect for reply threads */
+.reply-thread:hover > .reply-item {
+  background-color: #f9f9f9;
+}
+
+/* Reply button visibility */
+.reply-actions {
+  display: flex;
+  margin-top: 8px;
+}
+
+.reply-button {
+  background: none;
+  border: none;
+  color: #3498db;
+  font-size: 0.85rem;
+  padding: 0;
+  margin-right: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.reply-button:hover {
+  text-decoration: underline;
+}
+
+/* Refined styles for threaded replies to match screenshot */
+
+/* Selected discussion container */
+.selected-discussion-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  overflow: hidden;
+}
+
+.selected-discussion {
+  padding: 0;
+}
+
+.discussion-content {
+  padding: 20px;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+/* Main post author and date */
+.discussion-meta {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.discussion-author {
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-right: 10px;
+}
+
+.discussion-date {
+  color: #7c7c7c;
+  font-size: 0.9rem;
+}
+
+/* Main discussion body */
+.discussion-body {
+  line-height: 1.5;
+  color: #333;
+  font-size: 1rem;
+  word-break: break-word;
+}
+
+/* Replies container */
+.replies-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  margin-top: 0;
+  border-top: none;
+}
+
+.replies-container h3 {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+/* Reply list */
+.replies-list {
+  margin-bottom: 20px;
+}
+
+/* Reply thread */
+.reply-thread {
+  margin-bottom: 12px;
+}
+
+/* Reply item styling */
+.reply-item {
+  background-color: white;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 1px;
+  border: 1px solid #eaeaea;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Reply author/date styling */
+.reply-meta {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.reply-author {
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-right: 10px;
+  font-size: 0.9rem;
+}
+
+.reply-date {
+  color: #7c7c7c;
+  font-size: 0.85rem;
+}
+
+/* Reply text styling */
+.reply-text {
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+/* Reply actions */
+.reply-actions {
+  margin-top: 6px;
+}
+
+.reply-button {
+  background: none;
+  border: none;
+  color: #4f86c6;
+  font-size: 0.85rem;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.reply-button:hover {
+  text-decoration: underline;
+  color: #3a75c4;
+}
+
+/* Nested replies styling */
+.child-replies {
+  margin-left: 24px;
+  margin-top: 1px;
+  position: relative;
+}
+
+/* Thread line to visually connect nested replies */
+.child-replies:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -12px;
+  height: 100%;
+  width: 2px;
+  background-color: #e0e0e0;
+}
+
+/* Nested reply form */
+.nested-reply-form {
+  margin-top: 10px;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.nested-reply-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  resize: vertical;
+  margin-bottom: 10px;
+  min-height: 60px;
+}
+
+.nested-reply-form textarea:focus {
+  border-color: #4f86c6;
+  outline: none;
+}
+
+.reply-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.submit-nested-reply-button {
+  background-color: #4f86c6;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.submit-nested-reply-button:hover {
+  background-color: #3a75c4;
+}
+
+.cancel-reply-button {
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ccc;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.cancel-reply-button:hover {
+  background-color: #f5f5f5;
+}
+
+/* Main reply form container - add proper padding and border */
+.reply-form-container {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+/* Reply form styling */
+.reply-form {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 15px;
+  position: relative;
+}
+
+/* Fix textarea to have proper padding */
+.reply-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  resize: vertical;
+  font-size: 0.95rem;
+  min-height: 80px;
+  margin-bottom: 0; /* Remove bottom margin */
+}
+
+.reply-form textarea:focus {
+  border-color: #4f86c6;
+  outline: none;
+}
+
+/* Container for the button with proper spacing */
+.reply-form-button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+  padding: 0 15px 15px;
+}
+
+/* Post Reply button styling */
+.submit-reply-button {
+  background-color: #4f86c6;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.submit-reply-button:hover {
+  background-color: #3a75c4;
+}
+
+/* Fix for overall padding to ensure the button isn't too close to edges */
+.selected-discussion-container {
+  padding-bottom: 20px;
+}
+
+/* Back to discussions button */
+.back-to-discussions {
+  background-color: #4f86c6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  margin-right: 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.back-to-discussions:hover {
+  background-color: #3a75c4;
+}
+
+/* Replies list container - add padding to avoid cutting off first reply line */
+.replies-list {
+  margin-bottom: 20px;
+  padding-left: 2px; /* Ensure the first vertical line is visible */
+}
+
+/* Reply thread container */
+.reply-thread {
+  margin-bottom: 12px;
+  position: relative; /* Important for proper line positioning */
+}
+
+/* Improve thread line connections for all nesting levels */
+.child-replies {
+  position: relative;
+  margin-left: 24px;
+  margin-top: 1px;
+  padding-left: 12px; /* Space for the thread line */
+}
+
+/* Consistent thread line that won't get misaligned at deeper levels */
+.child-replies:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 2px;
+  background-color: #e0e0e0;
+}
+
+/* Thread connector - horizontal line that connects to the vertical line */
+.reply-thread .reply-item {
+  position: relative;
+}
+
+/* Better positioning for nested replies after the first level */
+.child-replies .child-replies {
+  margin-left: 20px; /* Slightly reduce margin for deeper nesting to prevent misalignment */
+}
+
+/* Add threading lines between parent and child replies */
+.reply-thread.has-children > .reply-item:after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: -12px;
+  width: 12px;
+  height: 2px;
+  background-color: #e0e0e0;
+}
+
+/* Ensure proper spacing for nested replies */
+.reply-thread.has-children {
+  margin-bottom: 0;
+}
+
+/* Enhanced styling for the reply item to work with the threading */
+.reply-item {
+  background-color: white;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 1px;
+  border: 1px solid #eaeaea;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 1; /* Ensure reply is above the connecting lines */
+}
+
+/* Optional: Add a hover effect to highlight the active thread */
+.reply-thread:hover > .child-replies:before {
+  background-color: #bbd0e8;
+}
+
+.reply-thread.has-children:hover > .reply-item:after {
+  background-color: #bbd0e8;
+}
+
+/* OP (Original Poster) indicator styling */
+
+/* Style for the OP tag */
+.op-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background-color: #4f86c6;
+  color: white;
+  border-radius: 3px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* When in the main discussion username */
+.discussion-author .op-tag {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+}
+
+/* Style for the reply-author when it's the OP */
+.reply-author.is-op {
+  color: #4f86c6; /* Highlight the OP's username in the same color */
+}
+
+.discussion-item {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.discussion-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  border-color: #d0d0d0;
+}
+
+/* Optional: add a subtle indicator to show it's clickable */
+.discussion-item:after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid #bbb;
+  border-right: 2px solid #bbb;
+  transform: rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.discussion-item:hover:after {
+  opacity: 1;
+}
+
+/* Fix for positioning of the arrow indicator */
+.discussion-item {
+  position: relative;
+}
+
+/* Make the title more prominent on hover */
+.discussion-item:hover .discussion-title {
+  color: #4f86c6;
+}
+

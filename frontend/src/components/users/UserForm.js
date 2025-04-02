@@ -5,10 +5,13 @@ const UserForm = ({ onSubmit }) => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [usernameError, setUsernameError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // async function to validate username
   const validateUsername = async () => {
@@ -89,67 +92,74 @@ const UserForm = ({ onSubmit }) => {
     if (
       password.length < 8 ||
       !specialCharacterRegex.test(password) ||
-      !numberRegex.test(password)
+      !numberRegex.test(password) ||
+      !uppercaseRegex.test(password)
     ) {
       setPasswordError("Password must be at least 8 characters, at least one special character, at least one uppercase letter, and at least one number.");
       return false;
     }
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/checkPassword`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ password }),
-      });
-      if (!response.ok) {
-        throw new Error("Error checking password");
-      }
-      const data = await response.json();
-      if (!data.isAvailable) {
-        setPasswordError(data.message);
-        return false;
-      }
-    } catch (error) {
-      console.error("Error checking password:", error);
-      setPasswordError("Error checking password with the backend");
+    setPasswordError("");
+    return true;
+  };
+
+  const validateConfirmPassword = () => {
+    if (password !== confirmPassword) {
+      setConfirmPasswordError("Passwords do not match");
       return false;
     }
-    setPasswordError("");
+    setConfirmPasswordError("");
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Prevent multiple submission attempts
+    if (isSubmitting) return;
+    
+    // Set submitting state
+    setIsSubmitting(true);
 
-    // Reset any previous errors
-    setError('');
-    setUsernameError('');
-    setEmailError('');
-    setPasswordError('');
+    try {
+      // Reset any previous errors
+      setError('');
+      setUsernameError('');
+      setEmailError('');
+      setPasswordError('');
+      setConfirmPasswordError('');
 
-    // Validate fields
-    if (!username.trim() || !email.trim()) {
-      setError('Username and email are required');
-      return;
+      // Validate fields
+      if (!username.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+        setError('All fields are required');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Run all validations
+      const isUsernameValid = await validateUsername();
+      const isEmailValid = await validateEmail();
+      const isPasswordValid = await validatePassword();
+      const isConfirmPasswordValid = validateConfirmPassword();
+
+      // Check if all validations passed
+      if (!isUsernameValid || !isEmailValid || !isPasswordValid || !isConfirmPasswordValid) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      // All validations passed, call the onSubmit function
+      console.log("Form validation passed - submitting user data");
+      onSubmit({ username, email, password });
+    } catch (err) {
+      console.error("Error during form submission:", err);
+      setError("An unexpected error occurred. Please try again.");
+      setIsSubmitting(false);
     }
-
-    const isUsernameValid = await validateUsername();
-    const isEmailValid = await validateEmail();
-    const isPasswordValid = validatePassword();
-
-    if (!isUsernameValid || !isEmailValid || !isPasswordValid) {
-      return;
-    }
-
-    onSubmit({ username, email, password });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="user-form">
-      <h2>Add New User</h2>
-
+    <form onSubmit={handleSubmit} className="login-form">
       {error && <div className="form-error">{error}</div>}
 
       <div className="form-group">
@@ -162,7 +172,7 @@ const UserForm = ({ onSubmit }) => {
           placeholder="Enter username"
           className={usernameError ? "error-input" : ""}
         />
-        {usernameError && <div className="error">{usernameError}</div>}
+        {usernameError && <div className="form-error">{usernameError}</div>}
       </div>
 
       <div className="form-group">
@@ -175,7 +185,7 @@ const UserForm = ({ onSubmit }) => {
           placeholder="Enter email"
           className={emailError ? "error-input" : ""}
         />
-        {emailError && <div className="error">{emailError}</div>}
+        {emailError && <div className="form-error">{emailError}</div>}
       </div>
 
       <div className="form-group">
@@ -188,10 +198,25 @@ const UserForm = ({ onSubmit }) => {
           placeholder="Enter password"
           className={passwordError ? "error-input" : ""}
         />
-        {passwordError && <div className="error">{passwordError}</div>}
+        {passwordError && <div className="form-error">{passwordError}</div>}
       </div>
 
-      <button type="submit">Add User</button>
+      <div className="form-group">
+        <label htmlFor="confirmPassword">Confirm Password:</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder="Confirm your password"
+          className={confirmPasswordError ? "error-input" : ""}
+        />
+        {confirmPasswordError && <div className="form-error">{confirmPasswordError}</div>}
+      </div>
+
+      <button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? 'Creating Account...' : 'Create Account'}
+      </button>
     </form>
   );
 };

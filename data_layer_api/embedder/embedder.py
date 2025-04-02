@@ -2,6 +2,7 @@ import requests
 from typing import List
 from classes.course import Course
 from classes.discussion import Discussion
+from classes.reply import Reply
 
 OLLAMA_EMBED_ENDPOINT = "http://ollama:11434/api/embed"
 OLLAMA_MODEL_PULL_ENDPOINT = "http://ollama:11434/api/pull"
@@ -81,3 +82,35 @@ def get_embedding(query: str) -> List[float]:
     response = requests.post(OLLAMA_EMBED_ENDPOINT, json={"model": "nomic-embed-text", "input": query})
     response.raise_for_status()
     return response.json()['embeddings'][0]
+
+def embed_reply_vector(reply: Reply) -> List[float]:
+    """
+    Return an embedded vector for a reply based on relevant semantic fields
+    
+    Args:
+        reply (Reply): The reply object to embed
+        
+    Returns:
+        List[float]: The embedding vector for the reply
+    """
+    return get_embedding(reply_to_string(reply))
+
+def reply_to_string(reply: Reply) -> str:
+    """
+    Parses relevant fields from reply object to a string for embedding
+    
+    Args:
+        reply (Reply): The reply object to parse
+        
+    Returns:
+        str: A string representation of the reply for embedding
+    """
+    parts = [
+        f"Reply content: {reply.text}"
+    ]
+    
+    # If the reply is associated with a discussion, include that information
+    if reply.discussion_id:
+        parts.append(f"This reply is related to a discussion with ID: {reply.discussion_id}")
+    
+    return " ".join(parts)

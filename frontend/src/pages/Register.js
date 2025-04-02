@@ -11,6 +11,8 @@ const Register = () => {
 
   const handleSubmit = async (userData) => {
     try {
+      console.log("Submitting user data:", userData);
+      
       const response = await fetch(`${API_BASE_URL}/users/insert`, {
         method: 'POST',
         headers: {
@@ -19,19 +21,20 @@ const Register = () => {
         body: JSON.stringify(userData),
       });
       
+      const data = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
+        throw new Error(data.message || data.error || 'Registration failed');
       }
       
-      const data = await response.json();
+      console.log("Registration successful:", data);
       
       // Store the token in localStorage
       localStorage.setItem('token', data.access_token);
       
       // Store user information in localStorage
       const userInfo = {
-        id: data.user_id, // The registration API returns user_id directly
+        id: data.user_id,
         username: userData.username
       };
       
@@ -53,7 +56,7 @@ const Register = () => {
   };
 
   return (
-    <div className="register-container">
+    <div className="login-container">
       <h2>Create an Account</h2>
       
       {error && <div className="form-error">{error}</div>}
@@ -68,10 +71,10 @@ const Register = () => {
           <UserForm onSubmit={handleSubmit} />
           
           <div className="login-link">
-            <p>Already have an account? 
-              <button 
-                type="button" 
-                className="login-button" 
+            <p>Already have an account?
+              <button
+                type="button"
+                className="login-button"
                 onClick={() => navigate('/login')}
               >
                 Login

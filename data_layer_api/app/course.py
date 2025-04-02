@@ -2,7 +2,8 @@ from flask import Blueprint, request, jsonify
 from database.db_factory import get_vector_db
 from classes.course import Course, CourseReview
 from classes.discussion import Discussion
-from embedder.embedder import get_embedding, embed_course_vector, embed_discussion_vector
+from classes.reply import Reply
+from embedder.embedder import get_embedding, embed_course_vector, embed_discussion_vector, embed_reply_vector
 from uuid import UUID
 course_bp = Blueprint('course', __name__)
 
@@ -354,4 +355,212 @@ def create_discussion(course_id):
     except Exception as e:
         # Log the error for debugging
         print(f"Error creating discussion: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@course_bp.route('/<course_id>/discussion/<discussion_id>/replies', methods=['GET'])
+def get_discussion_replies(course_id, discussion_id):
+    """
+    Get all replies for a specific discussion.
+    
+    URL Parameters:
+        course_id: The UUID of the course
+        discussion_id: The UUID of the discussion to fetch replies for
+        
+    Query Parameters:
+        limit (optional): Maximum number of replies to return
+        offset (optional): Number of replies to skip (for pagination)
+        
+    Returns:
+        JSON with replies array
+    """
+    try:
+        # Validate discussion_id format
+        try:
+            # Attempt to parse as UUID to validate format
+            uuid_obj = UUID(discussion_id)
+        except ValueError:
+            return jsonify({"error": "Invalid discussion ID format"}), 400
+            
+        # Get pagination parameters
+        limit = request.args.get('limit', type=int)
+        offset = request.args.get('offset', type=int)
+        
+        # Get database connection
+        database = get_vector_db()
+        
+        # First check if discussion exists
+        # This would need a get_discussion_by_id method in your database class
+        # For now, we'll skip this check and assume the discussion exists
+        
+        # Get replies for the discussion
+        replies = database.get_replies_by_discussion(discussion_id)
+        
+        # Apply pagination if specified
+        if limit is not None or offset is not None:
+            offset = offset or 0
+            
+            if limit is not None:
+                paginated_replies = replies[offset:offset+limit]
+            else:
+                paginated_replies = replies[offset:]
+                
+            result = {
+                "replies": paginated_replies,
+                "pagination": {
+                    "total": len(replies),
+                    "offset": offset,
+                    "limit": limit,
+                    "returned": len(paginated_replies)
+                }
+            }
+        else:
+            result = {
+                "replies": replies
+            }
+        
+        database.close()
+        return jsonify(result)
+        
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error getting discussion replies: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@course_bp.route('/<course_id>/discussion/<discussion_id>/reply', methods=['POST'])
+def create_reply(course_id, discussion_id):
+    """
+    Create a new reply for a discussion.
+    
+    URL Parameters:
+        course_id: The UUID of the course
+        discussion_id: The UUID of the discussion to reply to
+        
+    Request body:
+        {
+            "user_id": UUID,
+            "text": str
+        }
+        
+    Returns:
+        JSON with success message and reply ID
+    """
+    try:
+        # Validate discussion_id format
+        try:
+            discussion_uuid = UUID(discussion_id)
+        except ValueError:
+            return jsonify({"error": "Invalid discussion ID format"}), 400
+        
+        # Get request payload
+        payload = request.get_json()
+        
+        # Validate required fields
+        if not payload.get("user_id") or not payload.get("text"):
+            return jsonify({"error": "Missing required fields: user_id and text are required"}), 400
+        
+        user_id = payload["user_id"]
+        text = payload["text"]
+        
+        # Validate user_id format
+        try:
+            user_uuid = UUID(user_id)
+        except ValueError:
+            return jsonify({"error": "Invalid user ID format"}), 400
+        
+        # Get database connection
+        database = get_vector_db()
+        
+        # Create reply object
+        reply = Reply(
+            text=text,
+            user_id=user_uuid,
+            discussion_id=discussion_uuid
+        )
+        
+        # Generate embedding for the reply
+        reply_vector = embed_reply_vector(reply)
+        
+        # Insert reply into database
+        reply_id = database.insert_reply(reply, reply_vector)
+        database.close()
+        
+        return jsonify({
+            "message": "Reply created successfully",
+            "reply_id": str(reply_id)
+        }), 201
+        
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error creating reply: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+@course_bp.route('/<course_id>/discussion/<discussion_id>/reply/<reply_id>/reply', methods=['POST'])
+def reply_to_reply(course_id, discussion_id, reply_id):
+    """
+    Create a new reply to an existing reply.
+    
+    URL Parameters:
+        course_id: The UUID of the course
+        discussion_id: The UUID of the discussion
+        reply_id: The UUID of the reply to respond to
+        
+    Request body:
+        {
+            "user_id": UUID,
+            "text": str
+        }
+        
+    Returns:
+        JSON with success message and reply ID
+    """
+    try:
+        # Validate UUIDs
+        try:
+            course_uuid = UUID(course_id)
+            discussion_uuid = UUID(discussion_id)
+            parent_reply_uuid = UUID(reply_id)
+        except ValueError:
+            return jsonify({"error": "Invalid UUID format"}), 400
+        
+        # Get request payload
+        payload = request.get_json()
+        
+        # Validate required fields
+        if not payload.get("user_id") or not payload.get("text"):
+            return jsonify({"error": "Missing required fields: user_id and text are required"}), 400
+        
+        user_id = payload["user_id"]
+        text = payload["text"]
+        
+        # Validate user_id format
+        try:
+            user_uuid = UUID(user_id)
+        except ValueError:
+            return jsonify({"error": "Invalid user ID format"}), 400
+        
+        # Get database connection
+        database = get_vector_db()
+        
+        # Create reply object
+        reply = Reply(
+            text=text,
+            user_id=user_uuid,
+            discussion_id=discussion_uuid
+        )
+        
+        # Generate embedding for the reply
+        reply_vector = embed_reply_vector(reply)
+        
+        # Insert reply to reply into database
+        reply_id = database.insert_reply_to_reply(reply, parent_reply_uuid, reply_vector)
+        database.close()
+        
+        return jsonify({
+            "message": "Reply created successfully",
+            "reply_id": str(reply_id)
+        }), 201
+        
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error creating reply to reply: {str(e)}")
         return jsonify({"error": str(e)}), 500

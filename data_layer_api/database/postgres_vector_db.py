@@ -98,6 +98,7 @@ class PostgresVectorDB(VectorDB):
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 discussion_id UUID NOT NULL REFERENCES discussions(id) ON DELETE CASCADE,
+                parent_reply_id UUID REFERENCES replies(id) ON DELETE CASCADE,
                 text TEXT NOT NULL,
                 embedding vector(768) NOT NULL, -- Added vector embedding
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -646,7 +647,6 @@ class PostgresVectorDB(VectorDB):
 
         return review_id
 
-    #TODO
     def delete_course_review(self, review_id):
         """
         Delete a course review by its ID.
@@ -690,7 +690,7 @@ class PostgresVectorDB(VectorDB):
     
 # Discussion Queries
 
-    #TODO turn this into "get recent discussions"
+    #TODO turn this into "get recent discussions" for "recent activity" page
     def get_all_discussions(self):
         """
         Get all discussions from the database.
@@ -797,21 +797,23 @@ class PostgresVectorDB(VectorDB):
 
     def get_discussions_by_course(self, course_id):
         """
-        Get all discussions for a specific course.
+        Get all discussions for a specific course along with reply counts.
         
         Args:
             course_id (UUID): The ID of the course
             
         Returns:
-            List[Dict]: List of discussions
+            List[Dict]: List of discussions with reply counts
         """
         with self.conn.cursor() as cursor:
             cursor.execute("""
                 SELECT d.id, d.title, d.description, d.user_id, u.username,
-                    d.created_at
+                    d.created_at, COUNT(r.id) as reply_count
                 FROM discussions d
                 JOIN users u ON d.user_id = u.id
+                LEFT JOIN replies r ON r.discussion_id = d.id
                 WHERE d.course_id = %s
+                GROUP BY d.id, u.username
                 ORDER BY d.created_at DESC
             """, [course_id])
             
@@ -827,10 +829,10 @@ class PostgresVectorDB(VectorDB):
                         discussion_dict[key] = str(value)
                     elif isinstance(value, datetime):
                         discussion_dict[key] = value.isoformat()
-                        
-                results.append(discussion_dict)
                 
-        return results
+                results.append(discussion_dict)
+            
+            return results
 
     #TODO
     def get_discussions_by_user(self, user_id):
@@ -893,6 +895,46 @@ class PostgresVectorDB(VectorDB):
             
         return rows_deleted > 0
 
+    def insert_reply_to_reply(self, reply: Reply, parent_reply_id: UUID, vector: List[float]):
+        """
+        Insert a reply to another reply into the replies table.
+        
+        Args:
+            reply (Reply): The reply object to insert
+            parent_reply_id (UUID): The ID of the parent reply this is responding to
+            vector (List[float]): The embedding vector for the reply text
+            
+        Returns:
+            UUID: The ID of the inserted reply
+        """
+        with self.conn.cursor() as cursor:
+            # Format the vector properly for pgvector
+            vector_str = self.pgvector_format(vector)
+            
+            # Insert the reply
+            cursor.execute("""
+                INSERT INTO replies (
+                    user_id,
+                    discussion_id,
+                    text,
+                    embedding,
+                    parent_reply_id
+                ) VALUES (%s, %s, %s, %s, %s)
+                RETURNING id
+            """, [
+                reply.user_id,
+                reply.discussion_id,
+                reply.text,
+                vector_str,
+                parent_reply_id
+            ])
+            
+            # Get the generated reply ID
+            reply_id = cursor.fetchone()[0]
+            self.conn.commit()
+            
+        return reply_id
+
     def get_replies_by_discussion(self, discussion_id):
         """
         Get all replies for a specific discussion.
@@ -901,23 +943,24 @@ class PostgresVectorDB(VectorDB):
             discussion_id (UUID): The ID of the discussion
             
         Returns:
-            List[Dict]: List of replies with user information
+            List[Dict]: List of replies with user information and parent reply information
         """
         with self.conn.cursor() as cursor:
             cursor.execute("""
                 SELECT 
-                    r.id, 
-                    r.text, 
+                    r.id,
+                    r.text,
                     r.created_at,
                     r.user_id,
-                    u.username
+                    u.username,
+                    r.parent_reply_id
                 FROM 
                     replies r
-                JOIN 
+                JOIN
                     users u ON r.user_id = u.id
-                WHERE 
+                WHERE
                     r.discussion_id = %s
-                ORDER BY 
+                ORDER BY
                     r.created_at ASC
             """, [discussion_id])
             
@@ -927,9 +970,17 @@ class PostgresVectorDB(VectorDB):
             for row in cursor.fetchall():
                 # Convert row to dictionary
                 reply_dict = dict(zip(columns, row))
-                results.append(reply_dict)
                 
-        return results
+                # Convert UUID and datetime objects to strings for JSON serialization
+                for key, value in reply_dict.items():
+                    if isinstance(value, UUID):
+                        reply_dict[key] = str(value)
+                    elif isinstance(value, datetime):
+                        reply_dict[key] = value.isoformat()
+                
+                results.append(reply_dict)
+            
+            return results
 
     #TODO
     def get_replies_by_user(self, user_id):
