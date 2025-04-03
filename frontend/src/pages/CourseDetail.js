@@ -249,7 +249,7 @@ const CourseDetail = () => {
       )}
       
       <button onClick={handleBackClick} className="back-button">
-        ← Back to Courses
+        Back to Courses
       </button>
       
       <div className="course-detail-container">

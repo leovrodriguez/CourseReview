@@ -9,7 +9,16 @@ const Reply = ({ reply, courseId, discussionId, depth = 0, onReplyAdded, origina
   const [replyText, setReplyText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [childReplies, setChildReplies] = useState(reply.child_replies || []);
-  
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const isOriginalPoster = reply.user_id === originalPosterId;
+  const isDeleted = reply.text === '[deleted]';
+
+  // Get the current user to determine if they can delete the reply
+  const userString = localStorage.getItem('user');
+  const currentUser = userString ? JSON.parse(userString) : null;
+  const canDelete = currentUser && reply.user_id === currentUser.id && !isDeleted;
 
   const handleReplyClick = () => {
     setShowReplyForm(!showReplyForm);
@@ -92,20 +101,81 @@ const Reply = ({ reply, courseId, discussionId, depth = 0, onReplyAdded, origina
     }
   };
 
+  // Function to handle delete button click
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  // Function to cancel delete
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(false);
+  };
+
+  // Function to confirm and process delete
+  const handleConfirmDelete = async () => {
+    const token = localStorage.getItem('token');
+    const userString = localStorage.getItem('user');
+
+    if (!token || !userString) {
+      alert('You must be logged in to delete a reply');
+      setShowDeleteConfirm(false);
+      return;
+    }
+
+    const userData = JSON.parse(userString);
+    const userId = userData.id;
+
+    try {
+      setIsDeleting(true);
+
+      const response = await fetch(`${API_BASE_URL}/course/${courseId}/discussion/${discussionId}/reply/${reply.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          user_id: userId
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete reply');
+      }
+
+      // Update the reply text locally to show as deleted
+      reply.text = '[deleted]';
+      reply.username = 'Anonymous';
+
+      // Hide delete confirmation
+      setShowDeleteConfirm(false);
+
+      // Notify parent component to refresh
+      if (onReplyAdded) {
+        onReplyAdded();
+      }
+
+    } catch (err) {
+      console.error('Error deleting reply:', err);
+      alert('Error deleting reply: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  const isOriginalPoster = reply.user_id === originalPosterId;
-
   return (
     <div className={`reply-thread ${childReplies.length > 0 ? 'has-children' : ''}`}>
-      <div className="reply-item">
+      <div className={`reply-item ${isDeleted ? 'deleted' : ''}`}>
         <div className="reply-meta">
-          <span className={`reply-author ${isOriginalPoster ? 'is-op' : ''}`}>
+          <span className={`reply-author ${isOriginalPoster && !isDeleted ? 'is-op' : ''}`}>
             {reply.username || 'Anonymous'}
-            {isOriginalPoster && <span className="op-tag">OP</span>}
+            {isOriginalPoster && !isDeleted && <span className="op-tag">OP</span>}
           </span>
           <span className="reply-date">{formatDate(reply.created_at)}</span>
         </div>
@@ -113,14 +183,39 @@ const Reply = ({ reply, courseId, discussionId, depth = 0, onReplyAdded, origina
           {reply.text}
         </div>
         <div className="reply-actions">
-          <button 
-            className="reply-button" 
-            onClick={handleReplyClick}
-          >
-            {showReplyForm ? 'Cancel' : 'Reply'}
-          </button>
+          {!isDeleted && (
+            <button
+              className="icon-button reply-icon-button"
+              onClick={handleReplyClick}
+              aria-label="Reply"
+              title="Reply"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+              </svg>
+              Reply
+            </button>
+          )}
+          {canDelete && (
+            <button
+              className="icon-button delete-icon-button"
+              onClick={handleDeleteClick}
+              aria-label="Delete reply"
+              title="Delete reply"
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+              Delete
+            </button>
+          )}
         </div>
-        
+
         {showReplyForm && (
           <div className="nested-reply-form">
             <form onSubmit={handleSubmitReply}>
@@ -149,8 +244,31 @@ const Reply = ({ reply, courseId, discussionId, depth = 0, onReplyAdded, origina
             </form>
           </div>
         )}
+
+        {/* Delete confirmation modal */}
+        {showDeleteConfirm && (
+          <div className="delete-confirmation">
+            <p>Are you sure you want to delete this reply?</p>
+            <div className="delete-confirmation-buttons">
+              <button
+                className="cancel-delete-button"
+                onClick={handleCancelDelete}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="confirm-delete-button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-      
+
       {/* Render child replies */}
       {childReplies.length > 0 && (
         <div className="child-replies">
@@ -728,7 +846,7 @@ const CourseDiscussions = ({ courseId }) => {
                 className="back-to-discussions"
                 onClick={handleBackToDiscussions}
               >
-                &larr; Back to Discussions
+                Back to Discussions
               </button>
               <span>Discussion: {selectedDiscussion.title}</span>
             </>
@@ -869,6 +987,12 @@ const CourseDiscussions = ({ courseId }) => {
                 </span>
                 <span className="discussion-date">{formatDate(selectedDiscussion.created_at)}</span>
               </div>
+
+              {/* Title moved here, under the author info but above discussion body */}
+              <h2 className="discussion-title-repositioned">
+                {selectedDiscussion.title}
+              </h2>
+
               <div className="discussion-body">
                 {parseDescription(selectedDiscussion.description)}
               </div>
@@ -892,7 +1016,7 @@ const CourseDiscussions = ({ courseId }) => {
                           courseId={courseId}
                           discussionId={selectedDiscussion.id}
                           onReplyAdded={handleReplyAdded}
-                          originalPosterId={selectedDiscussion.user_id} // Pass the OP's user ID
+                          originalPosterId={selectedDiscussion.user_id}
                         />
                       ))}
                     </div>
@@ -912,6 +1036,9 @@ const CourseDiscussions = ({ courseId }) => {
                           className="submit-reply-button"
                           disabled={submittingReply}
                         >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                          </svg>
                           {submittingReply ? 'Submitting...' : 'Post Reply'}
                         </button>
                       </div>

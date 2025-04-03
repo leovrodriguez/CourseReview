@@ -388,12 +388,13 @@ def get_discussion_replies(course_id, discussion_id):
         # Get database connection
         database = get_vector_db()
         
-        # First check if discussion exists
-        # This would need a get_discussion_by_id method in your database class
-        # For now, we'll skip this check and assume the discussion exists
-        
         # Get replies for the discussion
         replies = database.get_replies_by_discussion(discussion_id)
+        
+        # Process replies to handle deleted replies
+        for reply in replies:
+            if reply.get('text') == '[deleted]':
+                reply['username'] = 'Anonymous'
         
         # Apply pagination if specified
         if limit is not None or offset is not None:
@@ -563,4 +564,62 @@ def reply_to_reply(course_id, discussion_id, reply_id):
     except Exception as e:
         # Log the error for debugging
         print(f"Error creating reply to reply: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
+@course_bp.route('/<course_id>/discussion/<discussion_id>/reply/<reply_id>', methods=['DELETE'])
+def delete_reply(course_id, discussion_id, reply_id):
+    """
+    Delete a reply by setting its text to '[deleted]'.
+    
+    URL Parameters:
+        course_id: The UUID of the course
+        discussion_id: The UUID of the discussion
+        reply_id: The UUID of the reply to delete
+        
+    Request body:
+        {
+            "user_id": UUID  # The user requesting the deletion (for authorization)
+        }
+        
+    Returns:
+        JSON with success or error message
+    """
+    try:
+        # Validate UUIDs
+        try:
+            reply_uuid = UUID(reply_id)
+        except ValueError:
+            return jsonify({"error": "Invalid reply ID format"}), 400
+        
+        # Get request payload
+        payload = request.get_json()
+        
+        # Validate required fields
+        if not payload.get("user_id"):
+            return jsonify({"error": "Missing required field: user_id is required"}), 400
+        
+        user_id = payload["user_id"]
+        
+        # Validate user_id format
+        try:
+            user_uuid = UUID(user_id)
+        except ValueError:
+            return jsonify({"error": "Invalid user ID format"}), 400
+        
+        # Get database connection
+        database = get_vector_db()
+        
+        # Update the reply text to '[deleted]'
+        success = database.update_reply_text(reply_id, "[deleted]")
+        
+        database.close()
+        
+        if success:
+            return jsonify({"message": "Reply deleted successfully"}), 200
+        else:
+            return jsonify({"error": "Failed to delete reply"}), 500
+        
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error deleting reply: {str(e)}")
         return jsonify({"error": str(e)}), 500

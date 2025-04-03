@@ -876,24 +876,33 @@ class PostgresVectorDB(VectorDB):
             
         return reply_id
 
-    def delete_reply(self, reply_id):
+    def update_reply_text(self, reply_id, new_text):
         """
-        Delete a reply from the replies table.
+        Update the text of a reply in the database.
         
         Args:
-            reply_id (UUID): The ID of the reply to delete
+            reply_id (UUID): The ID of the reply to update
+            new_text (str): The new text to set for the reply
             
         Returns:
-            bool: True if a reply was deleted, False otherwise
+            bool: True if the update was successful, False otherwise
         """
-        with self.conn.cursor() as cursor:
-            cursor.execute("DELETE FROM replies WHERE id = %s", [reply_id])
-            
-            # Check if any rows were deleted
-            rows_deleted = cursor.rowcount
-            self.conn.commit()
-            
-        return rows_deleted > 0
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE replies SET text = %s WHERE id = %s",
+                    [new_text, reply_id]
+                )
+                
+                # Check if any rows were updated
+                rows_updated = cursor.rowcount
+                self.conn.commit()
+                
+                return rows_updated > 0
+        except Exception as e:
+            print(f"Error updating reply text: {str(e)}")
+            self.conn.rollback()
+            return False
 
     def insert_reply_to_reply(self, reply: Reply, parent_reply_id: UUID, vector: List[float]):
         """
@@ -982,6 +991,8 @@ class PostgresVectorDB(VectorDB):
             
             return results
 
+    
+
     #TODO
     def get_replies_by_user(self, user_id):
         return None
@@ -1057,49 +1068,6 @@ class PostgresVectorDB(VectorDB):
             self.conn.commit()
             
         return rows_deleted > 0
-
-    def get_liked_learning_journeys_by_user(self, user_id):
-        """
-        Get all learning journeys liked by a specific user.
-        
-        Args:
-            user_id (UUID): The ID of the user
-            
-        Returns:
-            List[Dict]: List of liked learning journeys with basic information
-        """
-        with self.conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT 
-                    lj.id, 
-                    lj.title, 
-                    lj.description, 
-                    lj.created_at,
-                    u.username as creator_username,
-                    l.created_at as liked_at,
-                    (SELECT COUNT(*) FROM learning_journey_courses WHERE learning_journey_id = lj.id) as course_count
-                FROM 
-                    likes l
-                JOIN 
-                    learning_journeys lj ON l.object_id = lj.id
-                JOIN 
-                    users u ON lj.user_id = u.id
-                WHERE 
-                    l.user_id = %s AND 
-                    l.object_type = 'learning_journey'
-                ORDER BY 
-                    l.created_at DESC
-            """, [user_id])
-            
-            columns = [desc[0] for desc in cursor.description]
-            results = []
-            
-            for row in cursor.fetchall():
-                # Convert row to dictionary
-                journey_dict = dict(zip(columns, row))
-                results.append(journey_dict)
-                
-        return results
 
     def get_liked_courses_by_user(self, user_id):
         """
