@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCourseReviews } from '../../api/ratings';
+import { getCourseReviews } from '../../api/courses';
 
 const CourseCard = ({ course }) => {
   const [internalRatings, setInternalRatings] = useState({

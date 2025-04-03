@@ -1,4 +1,6 @@
 import psycopg2
+import psycopg2.extras
+psycopg2.extras.register_uuid()
 from typing import List, Optional
 from database.vector_db import VectorDB
 from env import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
@@ -80,38 +82,15 @@ class PostgresVectorDB(VectorDB):
                 UNIQUE (user_id, course_id) -- Ensures a user can only review a course once
             );               
 
-            -- Learning Journeys Table
-            CREATE TABLE IF NOT EXISTS learning_journeys (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                title TEXT NOT NULL,
-                description TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-
-            -- Learning Journey Courses (to maintain order)
-            CREATE TABLE IF NOT EXISTS learning_journey_courses (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                learning_journey_id UUID NOT NULL REFERENCES learning_journeys(id) ON DELETE CASCADE,
-                course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-                course_order INT NOT NULL CHECK (course_order > 0),
-                UNIQUE (learning_journey_id, course_order)
-            );
-
             -- Discussions Table
             CREATE TABLE IF NOT EXISTS discussions (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
-                learning_journey_id UUID REFERENCES learning_journeys(id) ON DELETE CASCADE,
                 title TEXT NOT NULL,
                 description TEXT NOT NULL,
                 embedding vector(768) NOT NULL, -- Added vector embedding
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                CHECK (
-                    (course_id IS NOT NULL AND learning_journey_id IS NULL) OR 
-                    (learning_journey_id IS NOT NULL AND course_id IS NULL)
-                )
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
             -- Replies Table
@@ -119,6 +98,8 @@ class PostgresVectorDB(VectorDB):
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 discussion_id UUID NOT NULL REFERENCES discussions(id) ON DELETE CASCADE,
+                parent_reply_id UUID REFERENCES replies(id) ON DELETE CASCADE,
+                parent_reply_id UUID REFERENCES replies(id) ON DELETE CASCADE,
                 text TEXT NOT NULL,
                 embedding vector(768) NOT NULL, -- Added vector embedding
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -129,7 +110,7 @@ class PostgresVectorDB(VectorDB):
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 object_id UUID NOT NULL,
-                object_type TEXT NOT NULL CHECK (object_type IN ('learning_journey', 'discussion', 'reply')), 
+                object_type TEXT NOT NULL CHECK (object_type IN ('discussion', 'reply')), 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE (user_id, object_id, object_type)
             );
@@ -354,89 +335,6 @@ class PostgresVectorDB(VectorDB):
                     course_dict[key] = value.isoformat()
                     
             return course_dict
-
-    def get_course_reviews(self, course_id):
-        """
-        Get all reviews for a specific course.
-        
-        Args:
-            course_id (str or UUID): The ID of the course to fetch reviews for
-            
-        Returns:
-            list: A list of review dictionaries with user information
-        """
-        query = """
-            SELECT 
-                cr.id,
-                cr.user_id,
-                u.username,
-                u.email,
-                cr.course_id,
-                cr.rating,
-                cr.description,
-                cr.created_at
-            FROM 
-                course_reviews cr
-            JOIN
-                users u ON cr.user_id = u.id
-            WHERE 
-                cr.course_id = %s
-            ORDER BY 
-                cr.created_at DESC
-        """
-        
-        with self.conn.cursor() as cursor:
-            cursor.execute(query, [course_id])
-            
-            # Get column names
-            columns = [desc[0] for desc in cursor.description]
-            
-            # Convert query results to list of dictionaries
-            reviews = []
-            for row in cursor.fetchall():
-                review_dict = dict(zip(columns, row))
-                
-                # Convert UUID and datetime to strings for JSON serialization
-                for key, value in review_dict.items():
-                    if isinstance(value, UUID):
-                        review_dict[key] = str(value)
-                    elif isinstance(value, datetime):
-                        review_dict[key] = value.isoformat()
-                
-                # Limit email exposure - only include the first part
-                if 'email' in review_dict and review_dict['email']:
-                    email_parts = review_dict['email'].split('@')
-                    if len(email_parts) > 1:
-                        review_dict['email'] = f"{email_parts[0][0:3]}...@{email_parts[1]}"
-                        
-                reviews.append(review_dict)
-            
-            # Get aggregate statistics
-            stats_query = """
-                SELECT 
-                    COUNT(*) as review_count,
-                    AVG(rating) as avg_rating,
-                    MIN(rating) as min_rating,
-                    MAX(rating) as max_rating
-                FROM 
-                    course_reviews
-                WHERE 
-                    course_id = %s
-            """
-            
-            cursor.execute(stats_query, [course_id])
-            stats = dict(zip([desc[0] for desc in cursor.description], cursor.fetchone()))
-            
-            # Round average rating to 2 decimal places
-            if stats['avg_rating'] is not None:
-                stats['avg_rating'] = round(float(stats['avg_rating']), 2)
-                
-            result = {
-                "reviews": reviews,
-                "stats": stats
-            }
-                
-            return result
         
     def find_by_email(self, email):
         """
@@ -463,9 +361,9 @@ class PostgresVectorDB(VectorDB):
                 
         return None
 
-    def find_by_id(self, id):
+    def get_user_by_id(self, id):
         """
-        Find a user by their id.
+        Get a user by their id.
         
         Args:
             email (str): The user's id to search for
@@ -488,9 +386,9 @@ class PostgresVectorDB(VectorDB):
                 
         return None
         
-    def find_by_username(self, username):
+    def get_user_by_username(self, username):
         """
-        Find a user by their username.
+        Get a user by their username.
         
         Args:
             username (str): The username to search for
@@ -620,6 +518,90 @@ class PostgresVectorDB(VectorDB):
                 
             return users
 
+    # Review Queries
+    def get_course_reviews(self, course_id):
+        """
+        Get all reviews for a specific course.
+        
+        Args:
+            course_id (str or UUID): The ID of the course to fetch reviews for
+            
+        Returns:
+            list: A list of review dictionaries with user information
+        """
+        query = """
+            SELECT 
+                cr.id,
+                cr.user_id,
+                u.username,
+                u.email,
+                cr.course_id,
+                cr.rating,
+                cr.description,
+                cr.created_at
+            FROM 
+                course_reviews cr
+            JOIN
+                users u ON cr.user_id = u.id
+            WHERE 
+                cr.course_id = %s
+            ORDER BY 
+                cr.created_at DESC
+        """
+        
+        with self.conn.cursor() as cursor:
+            cursor.execute(query, [course_id])
+            
+            # Get column names
+            columns = [desc[0] for desc in cursor.description]
+            
+            # Convert query results to list of dictionaries
+            reviews = []
+            for row in cursor.fetchall():
+                review_dict = dict(zip(columns, row))
+                
+                # Convert UUID and datetime to strings for JSON serialization
+                for key, value in review_dict.items():
+                    if isinstance(value, UUID):
+                        review_dict[key] = str(value)
+                    elif isinstance(value, datetime):
+                        review_dict[key] = value.isoformat()
+                
+                # Limit email exposure - only include the first part
+                if 'email' in review_dict and review_dict['email']:
+                    email_parts = review_dict['email'].split('@')
+                    if len(email_parts) > 1:
+                        review_dict['email'] = f"{email_parts[0][0:3]}...@{email_parts[1]}"
+                        
+                reviews.append(review_dict)
+            
+            # Get aggregate statistics
+            stats_query = """
+                SELECT 
+                    COUNT(*) as review_count,
+                    AVG(rating) as avg_rating,
+                    MIN(rating) as min_rating,
+                    MAX(rating) as max_rating
+                FROM 
+                    course_reviews
+                WHERE 
+                    course_id = %s
+            """
+            
+            cursor.execute(stats_query, [course_id])
+            stats = dict(zip([desc[0] for desc in cursor.description], cursor.fetchone()))
+            
+            # Round average rating to 2 decimal places
+            if stats['avg_rating'] is not None:
+                stats['avg_rating'] = round(float(stats['avg_rating']), 2)
+                
+            result = {
+                "reviews": reviews,
+                "stats": stats
+            }
+                
+            return result
+
     def insert_course_review(self, review: CourseReview):
         """
         Insert or update a course review in the course_reviews table.
@@ -666,298 +648,95 @@ class PostgresVectorDB(VectorDB):
 
         return review_id
 
-
-# Learning Journey Queries
-    def insert_learning_journey(self, learning_journey: LearningJourney):
+    def delete_course_review(self, review_id):
         """
-        Insert a learning journey into the learning_journeys table.
+        Delete a course review by its ID.
         
         Args:
-            learning_journey (LearningJourney): The learning journey object to insert
+            review_id (str or UUID): The ID of the review to delete
             
         Returns:
-            UUID: The ID of the inserted learning journey
+            bool: True if the review was successfully deleted, False otherwise
         """
-        with self.conn.cursor() as cursor: 
-            cursor.execute("""
-                INSERT INTO learning_journeys (
-                    user_id,
-                    title,
-                    description
-                ) VALUES (%s, %s, %s)
-                RETURNING id
-            """, [
-                learning_journey.user_id,
-                learning_journey.title,
-                learning_journey.description
-            ])
-            
-            # Get the generated learning journey ID
-            journey_id = cursor.fetchone()[0]
-            self.conn.commit()
-
-        return journey_id
-
-    def delete_learning_journey(self, journey_id):
-        """
-        Delete a learning journey from the learning_journeys table.
-        
-        Args:
-            journey_id (UUID): The ID of the learning journey to delete
-            
-        Returns:
-            bool: True if a learning journey was deleted, False otherwise
-        """
-        with self.conn.cursor() as cursor:
-            cursor.execute("DELETE FROM learning_journeys WHERE id = %s", [journey_id])
-            
-            # Check if any rows were deleted
-            rows_deleted = cursor.rowcount
-            self.conn.commit()
-            
-            return rows_deleted > 0
-
-    def get_learning_journeys_by_user(self, user_id):
-        """
-        Get all learning journeys created by a specific user.
-        
-        Args:
-            user_id (UUID): The ID of the user
-            
-        Returns:
-            List[Dict]: List of learning journeys with basic information
-        """
-        with self.conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT 
-                    lj.id, 
-                    lj.title, 
-                    lj.description, 
-                    lj.created_at,
-                    (SELECT COUNT(*) FROM learning_journey_courses WHERE learning_journey_id = lj.id) as course_count
-                FROM 
-                    learning_journeys lj
-                WHERE 
-                    lj.user_id = %s
-                ORDER BY 
-                    lj.created_at DESC
-            """, [user_id])
-            
-            columns = [desc[0] for desc in cursor.description]
-            results = []
-            
-            for row in cursor.fetchall():
-                # Convert row to dictionary
-                journey_dict = dict(zip(columns, row))
-                results.append(journey_dict)
+        try:
+            with self.conn.cursor() as cursor:
+                # Check if the review exists first
+                cursor.execute(
+                    "SELECT * FROM course_reviews WHERE id = %s",
+                    [review_id]
+                )
                 
-        return results
-
-
-# Learning Journey Course Queries
-    def get_learning_journeys_by_course(self, course_id):
-        """
-        Get all learning journeys that include a specific course.
-        
-        Args:
-            course_id (UUID): The ID of the course
-            
-        Returns:
-            List[Dict]: List of learning journeys with their creator information
-        """
-        with self.conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT 
-                    lj.id, 
-                    lj.title, 
-                    lj.description, 
-                    lj.created_at,
-                    ljc.course_order,
-                    u.id as user_id,
-                    u.username,
-                    (SELECT COUNT(*) FROM learning_journey_courses WHERE learning_journey_id = lj.id) as total_courses
-                FROM 
-                    learning_journeys lj
-                JOIN 
-                    learning_journey_courses ljc ON lj.id = ljc.learning_journey_id
-                JOIN 
-                    users u ON lj.user_id = u.id
-                WHERE 
-                    ljc.course_id = %s
-                ORDER BY 
-                    lj.created_at DESC
-            """, [course_id])
-            
-            columns = [desc[0] for desc in cursor.description]
-            results = []
-            
-            for row in cursor.fetchall():
-                # Convert row to dictionary
-                journey_dict = dict(zip(columns, row))
-                results.append(journey_dict)
+                review = cursor.fetchone()
+                if not review:
+                    return False
                 
-        return results
-
-    def insert_learning_journey_course(self, learning_journey_course: LearningJourneyCourse):
-        """
-        Insert a mapping between a learning journey and a course with specified order.
-        
-        Args:
-            learning_journey_course (LearningJourneyCourse): The mapping object to insert
-            
-        Returns:
-            UUID: The ID of the inserted mapping
-        """
-        with self.conn.cursor() as cursor:
-            # Check if the mapping already exists
-            cursor.execute(
-                "SELECT id FROM learning_journey_courses WHERE learning_journey_id = %s AND course_id = %s",
-                [learning_journey_course.learning_journey_id, learning_journey_course.course_id]
-            )
-            existing_mapping = cursor.fetchone()
-            
-            if existing_mapping:
-                # If mapping exists, return the existing mapping ID
-                mapping_id = existing_mapping[0]
+                # Delete the review
+                cursor.execute(
+                    "DELETE FROM course_reviews WHERE id = %s",
+                    [review_id]
+                )
+                
+                # Get the number of affected rows
+                affected_rows = cursor.rowcount
+                
+                # Commit the transaction
                 self.conn.commit()
-                return mapping_id
                 
-            # Check if the course order already exists for this learning journey
-            cursor.execute(
-                "SELECT id FROM learning_journey_courses WHERE learning_journey_id = %s AND course_order = %s",
-                [learning_journey_course.learning_journey_id, learning_journey_course.course_order]
-            )
-            existing_order = cursor.fetchone()
-            
-            if existing_order:
-                # If the order exists, we need to update all higher orders
-                cursor.execute("""
-                    UPDATE learning_journey_courses 
-                    SET course_order = course_order + 1
-                    WHERE learning_journey_id = %s AND course_order >= %s
-                    ORDER BY course_order DESC
-                """, [
-                    learning_journey_course.learning_journey_id,
-                    learning_journey_course.course_order
-                ])
-            
-            # Insert the new mapping
-            cursor.execute("""
-                INSERT INTO learning_journey_courses (
-                    learning_journey_id,
-                    course_id,
-                    course_order
-                ) VALUES (%s, %s, %s)
-                RETURNING id
-            """, [
-                learning_journey_course.learning_journey_id,
-                learning_journey_course.course_id,
-                learning_journey_course.course_order
-            ])
-            
-            # Get the generated mapping ID
-            mapping_id = cursor.fetchone()[0]
-            self.conn.commit()
-            
-        return mapping_id
+                return affected_rows > 0
+        except Exception as e:
+            print(f"Error deleting course review: {e}")
+            # Rollback the transaction in case of error
+            self.conn.rollback()
+            return False
+    
+# Discussion Queries
 
-    def delete_learning_journey_course(self, mapping_id=None, learning_journey_id=None, course_id=None):
+    #TODO turn this into "get recent discussions" for "recent activity" page
+    def get_all_discussions(self):
         """
-        Delete a learning journey course mapping by ID, or by learning journey ID and course ID.
+        Get all discussions from the database.
         
-        Args:
-            mapping_id (UUID, optional): The ID of the mapping to delete
-            learning_journey_id (UUID, optional): The learning journey ID
-            course_id (UUID, optional): The course ID
-            
         Returns:
-            bool: True if a mapping was deleted, False otherwise
-        """
-        with self.conn.cursor() as cursor:
-            deleted_mapping = None
-            deleted_order = None
-            
-            if mapping_id:
-                # Get the learning journey ID and order before deleting
-                cursor.execute(
-                    "SELECT learning_journey_id, course_order FROM learning_journey_courses WHERE id = %s", 
-                    [mapping_id]
-                )
-                result = cursor.fetchone()
-                if result:
-                    deleted_mapping = result[0]
-                    deleted_order = result[1]
-                
-                # Delete by mapping ID
-                cursor.execute("DELETE FROM learning_journey_courses WHERE id = %s", [mapping_id])
-            elif learning_journey_id and course_id:
-                # Get the order before deleting
-                cursor.execute(
-                    "SELECT course_order FROM learning_journey_courses WHERE learning_journey_id = %s AND course_id = %s", 
-                    [learning_journey_id, course_id]
-                )
-                result = cursor.fetchone()
-                if result:
-                    deleted_mapping = learning_journey_id
-                    deleted_order = result[0]
-                
-                # Delete by learning journey ID and course ID
-                cursor.execute(
-                    "DELETE FROM learning_journey_courses WHERE learning_journey_id = %s AND course_id = %s", 
-                    [learning_journey_id, course_id]
-                )
-            else:
-                raise ValueError("Either mapping_id or both learning_journey_id and course_id must be provided")
-            
-            # Check if any rows were deleted
-            rows_deleted = cursor.rowcount
-            
-            # If rows were deleted and we know the learning journey ID and order,
-            # update the remaining course orders to ensure there are no gaps
-            if rows_deleted > 0 and deleted_mapping and deleted_order:
-                cursor.execute("""
-                    UPDATE learning_journey_courses
-                    SET course_order = course_order - 1
-                    WHERE learning_journey_id = %s AND course_order > %s
-                """, [deleted_mapping, deleted_order])
-            
-            self.conn.commit()
-            
-        return rows_deleted > 0
-
-    def get_learning_journey_courses(self, learning_journey_id: str):
-        """
-        Get all courses for a specific learning journey, ordered by course_order.
-        
-        Args:
-            learning_journey_id (UUID): The ID of the learning journey
-            
-        Returns:
-            List[Dict]: List of courses with their order information
+            list: A list of discussion dictionaries
         """
         with self.conn.cursor() as cursor:
             cursor.execute("""
-                SELECT c.id, c.title, c.description, c.platform, c.url, 
-                    c.authors, c.skills, c.rating, c.num_ratings, 
-                    c.image_url, c.is_free, ljc.course_order
-                FROM learning_journey_courses ljc
-                JOIN courses c ON ljc.course_id = c.id
-                WHERE ljc.learning_journey_id = %s
-                ORDER BY ljc.course_order
-            """, [learning_journey_id])
+                SELECT 
+                    d.id, 
+                    d.user_id, 
+                    u.username as user_username,
+                    d.course_id,
+                    c.title as course_title,
+                    d.title, 
+                    d.description, 
+                    d.created_at
+                FROM 
+                    discussions d
+                JOIN 
+                    users u ON d.user_id = u.id
+                LEFT JOIN 
+                    courses c ON d.course_id = c.id
+                ORDER BY 
+                    d.created_at DESC
+            """)
             
             columns = [desc[0] for desc in cursor.description]
-            results = []
+            discussions = []
             
             for row in cursor.fetchall():
-                # Convert row to dictionary
-                course_dict = dict(zip(columns, row))
-                results.append(course_dict)
+                discussion_dict = dict(zip(columns, row))
                 
-        return results
+                # Convert UUID and datetime objects to strings for JSON serialization
+                for key, value in discussion_dict.items():
+                    if isinstance(value, UUID):
+                        discussion_dict[key] = str(value)
+                    elif isinstance(value, datetime):
+                        discussion_dict[key] = value.isoformat()
+                        
+                discussions.append(discussion_dict)
+                
+            return discussions
 
-
-# Discussion Queries
     def insert_discussion(self, discussion: Discussion, vector: List[float]):
         """
         Insert a discussion into the discussions table.
@@ -969,10 +748,6 @@ class PostgresVectorDB(VectorDB):
         Returns:
             UUID: The ID of the inserted discussion
         """
-        # Validate that either course_id or learning_journey_id is provided, but not both
-        if (discussion.course_id is None and discussion.learning_journey_id is None) or \
-        (discussion.course_id is not None and discussion.learning_journey_id is not None):
-            raise ValueError("Either course_id or learning_journey_id must be provided, but not both")
         
         with self.conn.cursor() as cursor:
             # Format the vector for pgvector
@@ -983,16 +758,14 @@ class PostgresVectorDB(VectorDB):
                 INSERT INTO discussions (
                     user_id,
                     course_id,
-                    learning_journey_id,
                     title,
                     description,
                     embedding
-                ) VALUES (%s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s)
                 RETURNING id
             """, [
                 discussion.user_id,
                 discussion.course_id,
-                discussion.learning_journey_id,
                 discussion.title,
                 discussion.description,
                 vector_str
@@ -1025,21 +798,23 @@ class PostgresVectorDB(VectorDB):
 
     def get_discussions_by_course(self, course_id):
         """
-        Get all discussions for a specific course.
+        Get all discussions for a specific course along with reply counts.
         
         Args:
             course_id (UUID): The ID of the course
             
         Returns:
-            List[Dict]: List of discussions
+            List[Dict]: List of discussions with reply counts
         """
         with self.conn.cursor() as cursor:
             cursor.execute("""
                 SELECT d.id, d.title, d.description, d.user_id, u.username,
-                    d.created_at
+                    d.created_at, COUNT(r.id) as reply_count
                 FROM discussions d
                 JOIN users u ON d.user_id = u.id
+                LEFT JOIN replies r ON r.discussion_id = d.id
                 WHERE d.course_id = %s
+                GROUP BY d.id, u.username
                 ORDER BY d.created_at DESC
             """, [course_id])
             
@@ -1049,40 +824,20 @@ class PostgresVectorDB(VectorDB):
             for row in cursor.fetchall():
                 # Convert row to dictionary
                 discussion_dict = dict(zip(columns, row))
-                results.append(discussion_dict)
+                # Convert UUID and datetime objects to strings for JSON serialization
+                for key, value in discussion_dict.items():
+                    if isinstance(value, UUID):
+                        discussion_dict[key] = str(value)
+                    elif isinstance(value, datetime):
+                        discussion_dict[key] = value.isoformat()
                 
-        return results
-
-    def get_discussions_by_learning_journey(self, learning_journey_id):
-        """
-        Get all discussions for a specific learning journey.
-        
-        Args:
-            learning_journey_id (UUID): The ID of the learning journey
-            
-        Returns:
-            List[Dict]: List of discussions
-        """
-        with self.conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT d.id, d.title, d.description, d.user_id, u.username,
-                    d.created_at
-                FROM discussions d
-                JOIN users u ON d.user_id = u.id
-                WHERE d.learning_journey_id = %s
-                ORDER BY d.created_at DESC
-            """, [learning_journey_id])
-            
-            columns = [desc[0] for desc in cursor.description]
-            results = []
-            
-            for row in cursor.fetchall():
-                # Convert row to dictionary
-                discussion_dict = dict(zip(columns, row))
                 results.append(discussion_dict)
-                
-        return results
+            
+            return results
 
+    #TODO
+    def get_discussions_by_user(self, user_id):
+        return None
 
 # Reply Queries
     def insert_reply(self, reply: Reply, vector: List[float]):
@@ -1122,25 +877,75 @@ class PostgresVectorDB(VectorDB):
             
         return reply_id
 
-    def delete_reply(self, reply_id):
+    def update_reply_text(self, reply_id, new_text):
         """
-        Delete a reply from the replies table.
+        Update the text of a reply in the database.
         
         Args:
-            reply_id (UUID): The ID of the reply to delete
+            reply_id (UUID): The ID of the reply to update
+            new_text (str): The new text to set for the reply
             
         Returns:
-            bool: True if a reply was deleted, False otherwise
+            bool: True if the update was successful, False otherwise
+        """
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE replies SET text = %s WHERE id = %s",
+                    [new_text, reply_id]
+                )
+                
+                # Check if any rows were updated
+                rows_updated = cursor.rowcount
+                self.conn.commit()
+                
+                return rows_updated > 0
+        except Exception as e:
+            print(f"Error updating reply text: {str(e)}")
+            self.conn.rollback()
+            return False
+
+    def insert_reply_to_reply(self, reply: Reply, parent_reply_id: UUID, vector: List[float]):
+        """
+        Insert a reply to another reply into the replies table.
+        
+        Args:
+            reply (Reply): The reply object to insert
+            parent_reply_id (UUID): The ID of the parent reply this is responding to
+            vector (List[float]): The embedding vector for the reply text
+            
+        Returns:
+            UUID: The ID of the inserted reply
         """
         with self.conn.cursor() as cursor:
-            cursor.execute("DELETE FROM replies WHERE id = %s", [reply_id])
+            # Format the vector properly for pgvector
+            vector_str = self.pgvector_format(vector)
             
-            # Check if any rows were deleted
-            rows_deleted = cursor.rowcount
+            # Insert the reply
+            cursor.execute("""
+                INSERT INTO replies (
+                    user_id,
+                    discussion_id,
+                    text,
+                    embedding,
+                    parent_reply_id
+                ) VALUES (%s, %s, %s, %s, %s)
+                RETURNING id
+            """, [
+                reply.user_id,
+                reply.discussion_id,
+                reply.text,
+                vector_str,
+                parent_reply_id
+            ])
+            
+            # Get the generated reply ID
+            reply_id = cursor.fetchone()[0]
             self.conn.commit()
             
-        return rows_deleted > 0
+        return reply_id
 
+    
     def get_replies_by_discussion(self, discussion_id):
         """
         Get all replies for a specific discussion.
@@ -1149,23 +954,24 @@ class PostgresVectorDB(VectorDB):
             discussion_id (UUID): The ID of the discussion
             
         Returns:
-            List[Dict]: List of replies with user information
+            List[Dict]: List of replies with user information and parent reply information
         """
         with self.conn.cursor() as cursor:
             cursor.execute("""
                 SELECT 
-                    r.id, 
-                    r.text, 
+                    r.id,
+                    r.text,
                     r.created_at,
                     r.user_id,
-                    u.username
+                    u.username,
+                    r.parent_reply_id
                 FROM 
                     replies r
-                JOIN 
+                JOIN
                     users u ON r.user_id = u.id
-                WHERE 
+                WHERE
                     r.discussion_id = %s
-                ORDER BY 
+                ORDER BY
                     r.created_at ASC
             """, [discussion_id])
             
@@ -1175,10 +981,23 @@ class PostgresVectorDB(VectorDB):
             for row in cursor.fetchall():
                 # Convert row to dictionary
                 reply_dict = dict(zip(columns, row))
-                results.append(reply_dict)
                 
-        return results
+                # Convert UUID and datetime objects to strings for JSON serialization
+                for key, value in reply_dict.items():
+                    if isinstance(value, UUID):
+                        reply_dict[key] = str(value)
+                    elif isinstance(value, datetime):
+                        reply_dict[key] = value.isoformat()
+                
+                results.append(reply_dict)
+            
+            return results
 
+    
+
+    #TODO
+    def get_replies_by_user(self, user_id):
+        return None
 
 # Like Queries
     def insert_like(self, like: Like):
@@ -1251,49 +1070,6 @@ class PostgresVectorDB(VectorDB):
             self.conn.commit()
             
         return rows_deleted > 0
-
-    def get_liked_learning_journeys_by_user(self, user_id):
-        """
-        Get all learning journeys liked by a specific user.
-        
-        Args:
-            user_id (UUID): The ID of the user
-            
-        Returns:
-            List[Dict]: List of liked learning journeys with basic information
-        """
-        with self.conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT 
-                    lj.id, 
-                    lj.title, 
-                    lj.description, 
-                    lj.created_at,
-                    u.username as creator_username,
-                    l.created_at as liked_at,
-                    (SELECT COUNT(*) FROM learning_journey_courses WHERE learning_journey_id = lj.id) as course_count
-                FROM 
-                    likes l
-                JOIN 
-                    learning_journeys lj ON l.object_id = lj.id
-                JOIN 
-                    users u ON lj.user_id = u.id
-                WHERE 
-                    l.user_id = %s AND 
-                    l.object_type = 'learning_journey'
-                ORDER BY 
-                    l.created_at DESC
-            """, [user_id])
-            
-            columns = [desc[0] for desc in cursor.description]
-            results = []
-            
-            for row in cursor.fetchall():
-                # Convert row to dictionary
-                journey_dict = dict(zip(columns, row))
-                results.append(journey_dict)
-                
-        return results
 
     def get_liked_courses_by_user(self, user_id):
         """

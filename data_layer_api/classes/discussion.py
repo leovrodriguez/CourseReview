@@ -11,6 +11,4 @@ class Discussion:
     title: str
     description: str
     user_id: UUID
-    # Either course_id or learning_journey_id must be provided, but not both
-    course_id: Optional[UUID] = None
-    learning_journey_id: Optional[UUID] = None
+    course_id: UUID

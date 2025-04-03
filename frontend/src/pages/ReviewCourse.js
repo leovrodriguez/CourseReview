@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCourseDetails } from '../api';
-import { useRatings } from '../hooks/useRatings';
+import { useReviews } from '../hooks/useReviews';
 
-const RateCourse = () => {
+const ReviewCourse = () => {
   const { courseId, userId } = useParams();
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
-  const [rating, setRating] = useState(5);
+  const [review, setReview] = useState(5);
   const [reviewText, setReviewText] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { submitRating, loading: submitting } = useRatings();
+  const { submitReview, loading: submitting } = useReviews();
 
   useEffect(() => {
     const fetchCourse = async () => {
@@ -31,11 +31,11 @@ const RateCourse = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await submitRating(userId, courseId, rating, reviewText);
-      alert('Rating submitted successfully!');
+      await submitReview(userId, courseId, review, reviewText);
+      alert('Review submitted successfully!');
       navigate(-1); // Go back to previous page
     } catch (err) {
-      setError(`Failed to submit rating: ${err.message}`);
+      setError(`Failed to submit review: ${err.message}`);
     }
   };
 
@@ -45,18 +45,18 @@ const RateCourse = () => {
 
   return (
     <div>
-      <h1>Rate Course</h1>
+      <h1>Review Course</h1>
       <div className="course-details">
         <h2>{course.title}</h2>
         <p>{course.description}</p>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="rating-input">
-          <label>Your Rating (1-5):</label>
+        <div className="review-input">
+          <label>Your Review (1-5):</label>
           <select 
-            value={rating} 
-            onChange={(e) => setRating(Number(e.target.value))}
+            value={review} 
+            onChange={(e) => setReview(Number(e.target.value))}
           >
             <option value="1">1 - Poor</option>
             <option value="2">2 - Fair</option>
@@ -77,11 +77,11 @@ const RateCourse = () => {
         </div>
 
         <button type="submit" disabled={submitting}>
-          {submitting ? 'Submitting...' : 'Submit Rating'}
+          {submitting ? 'Submitting...' : 'Submit Review'}
         </button>
       </form>
     </div>
   );
 };
 
-export default RateCourse;
+export default ReviewCourse;

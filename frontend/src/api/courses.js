@@ -71,15 +71,72 @@ export const searchCourses = async (query, limit = 12) => {
 
 export const getCourseDetails = async (courseId) => {
   try {
+    console.log(`Fetching course details for ID: ${courseId}`);
+    
     const response = await fetch(`${API_BASE_URL}/course/${courseId}`);
     
     if (!response.ok) {
       throw new Error(`Error fetching course details: ${response.statusText}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log('Course details response:', data);
+    return data;
   } catch (error) {
     console.error('Error fetching course details:', error);
+    throw error;
+  }
+};
+
+// New functions for reviews
+
+// Submit a course review
+export const submitCourseReview = async (userId, courseId, rating, description) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/course/${courseId}/review`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        rating: rating,
+        description: description
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to submit review');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error submitting course review:', error);
+    throw error;
+  }
+};
+
+// Get reviews for a course
+export const getCourseReviews = async (courseId, limit, offset) => {
+  try {
+    // Construct query parameters
+    const url = new URL(`${API_BASE_URL}/course/${courseId}/reviews`);
+    
+    if (limit) url.searchParams.append('limit', limit);
+    if (offset) url.searchParams.append('offset', offset);
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch course reviews');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching course reviews:', error);
     throw error;
   }
 };

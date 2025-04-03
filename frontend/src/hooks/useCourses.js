@@ -1,7 +1,7 @@
 // src/hooks/useCourses.js
 import { useState, useEffect , useCallback} from 'react';
 import { fetchAllCourses, searchCourses } from '../api/courses';
-import {getCourseReviews} from '../api/ratings'
+import { getCourseReviews } from '../api/courses';
 
 export const useCourses = (initialQuery = '', initialSort = {}) => {
   const [courses, setCourses] = useState([]);

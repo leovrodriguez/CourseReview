@@ -740,7 +740,7 @@ button:disabled {
 }
 
 .back-button:hover {
-  color: #2980b9;
+  color: #ffffff;
   text-decoration: underline;
 }
 
@@ -1119,4 +1119,2363 @@ button:disabled {
   color: #7f8c8d;
   font-size: 1.1rem;
   margin: 0;
+}
+
+/* src/styles/login.css */
+.login-container {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.login-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.login-form .form-group {
+  margin-bottom: 15px;
+}
+
+.login-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.login-form button {
+  width: 100%;
+  padding: 10px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.login-form button:hover {
+  background-color: #2980b9;
+}
+
+.form-error {
+  color: #e74c3c;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: rgba(231, 76, 60, 0.1);
+  border-radius: 4px;
+}
+
+.register-link {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.register-button {
+  background: none;
+  border: none;
+  color: #3498db;
+  cursor: pointer;
+  font-size: 16px;
+  text-decoration: underline;
+  margin-left: 5px;
+}
+
+.register-button:hover {
+  color: #ffffff;
+}
+
+/* Registration page styles */
+.register-container {
+  max-width: 400px;
+  margin: 50px auto;
+  padding: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.register-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.login-link {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.login-button {
+  background: none;
+  border: none;
+  color: #3498db;
+  cursor: pointer;
+  font-size: 16px;
+  text-decoration: underline;
+  margin-left: 5px;
+}
+
+.login-button:hover {
+  color: #ffffff;
+}
+
+.form-success {
+  color: #2ecc71;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: rgba(46, 204, 113, 0.1);
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* src/styles/navbar.css */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #2c3e50;
+  padding: 0 20px;
+  height: 60px;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-logo a {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.navbar-links {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-links li {
+  margin: 0 15px;
+}
+
+.navbar-links li a {
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.3s;
+}
+
+.navbar-links li a:hover {
+  color: #3498db;
+}
+
+.navbar-auth {
+  display: flex;
+  align-items: center;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.login-nav-button,
+.register-nav-button {
+  padding: 8px 15px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.login-nav-button {
+  color: white;
+  border: 1px solid white;
+}
+
+.login-nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.register-nav-button {
+  background-color: #3498db;
+  color: white;
+}
+
+.register-nav-button:hover {
+  background-color: #2980b9;
+}
+
+/* Account dropdown styling */
+.account-dropdown {
+  position: relative;
+}
+
+.account-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.account-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-arrow {
+  font-size: 0.7rem;
+  margin-left: 5px;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  width: 150px;
+  z-index: 100;
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.dropdown-menu a,
+.dropdown-menu button {
+  display: block;
+  width: 100%;
+  padding: 12px 15px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #2c3e50;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.3s;
+}
+
+.dropdown-menu a:hover,
+.dropdown-menu button:hover {
+  background-color: #f5f5f5;
+}
+
+.dropdown-menu button {
+  border-top: 1px solid #eee;
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+/* src/styles/profile.css */
+.profile-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.profile-container h1 {
+  margin-top: 0;
+  color: #2c3e50;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.profile-info {
+  margin-top: 30px;
+}
+
+.profile-field {
+  display: flex;
+  margin-bottom: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.profile-field label {
+  font-weight: 600;
+  width: 120px;
+  color: #7f8c8d;
+}
+
+.profile-field span {
+  color: #2c3e50;
+  flex: 1;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #7f8c8d;
+  font-size: 18px;
+}
+
+/* src/styles/courseDetail.css */
+
+/* Tabs styling */
+.course-tabs-section {
+  margin-top: 30px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Updated tab button styling for better visibility */
+.tabs-header {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f9f9f9;
+}
+
+.tab-button {
+  padding: 15px 20px;
+  background: none;
+  border: none;
+  border-right: 1px solid #e0e0e0;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  flex: 1;
+  max-width: 200px;
+  text-align: center;
+  color: #2c3e50; /* Dark text color for all tabs */
+}
+
+.tab-button:hover {
+  background-color: #f0f0f0;
+}
+
+.tab-button.active {
+  background-color: white;
+  border-bottom: 3px solid #3498db;
+  color: #3498db;
+}
+
+/* Make non-active tabs more visible */
+.tab-button:not(.active) {
+  background-color: #f1f1f1;
+  color: #34495e;
+}
+
+.tab-content {
+  padding: 20px;
+}
+
+/* Reviews tab styling */
+.reviews-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.reviews-header h2 {
+  margin: 0;
+}
+
+.post-review-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.post-review-button:hover {
+  background-color: #2980b9;
+}
+
+/* Review form styling */
+.review-form-container {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.review-form h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.rating-input-container {
+  margin-bottom: 15px;
+}
+
+.rating-input-container label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.star-rating {
+  display: flex;
+  gap: 5px;
+}
+
+.star-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #ccc;
+  transition: color 0.2s;
+  padding: 0;
+  line-height: 1;
+}
+
+.star-button:hover,
+.star-button.selected {
+  color: #f1c40f;
+}
+
+.review-text-container {
+  margin-bottom: 15px;
+}
+
+.review-text-container label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.review-text-container textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.submit-review-button {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.submit-review-button:hover {
+  background-color: #27ae60;
+}
+
+.submit-review-button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.review-submit-error {
+  background-color: #fdedee;
+  color: #e74c3c;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.review-submit-success {
+  background-color: #e8f8f5;
+  color: #2ecc71;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+/* Discussions tab styling */
+.discussions-tab {
+  min-height: 200px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 6px;
+}
+
+.discussions-tab h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.coming-soon-message {
+  color: #34495e;
+  text-align: center;
+  margin-top: 40px;
+  font-style: italic;
+  font-size: 16px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+/* Reviews list styling */
+.reviews-summary {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.average-rating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 150px;
+}
+
+.avg-rating-value {
+  font-size: 36px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.avg-rating-stars {
+  font-size: 24px;
+  color: #f1c40f;
+  margin: 5px 0;
+}
+
+.total-reviews {
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.rating-distribution {
+  flex: 1;
+}
+
+.rating-bar-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.star-label {
+  width: 70px;
+  font-size: 14px;
+  color: #7f8c8d;
+}
+
+.rating-bar-wrapper {
+  flex: 1;
+  height: 12px;
+  background-color: #f0f0f0;
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 0 10px;
+}
+
+.rating-bar {
+  height: 100%;
+  background-color: #f1c40f;
+}
+
+.count-label {
+  width: 30px;
+  text-align: right;
+  font-size: 14px;
+  color: #7f8c8d;
+}
+
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.review-item {
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  padding: 15px;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.reviewer-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.reviewer-name {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.review-date {
+  color: #7f8c8d;
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.review-rating {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.rating-stars {
+  color: #f1c40f;
+  letter-spacing: 2px;
+}
+
+.rating-value {
+  font-weight: 600;
+  margin-top: 3px;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.review-content {
+  margin-top: 10px;
+}
+
+.review-text {
+  color: #34495e;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.no-reviews-container {
+  text-align: center;
+  padding: 30px 0;
+}
+
+.no-reviews-message {
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+.review-loading,
+.review-error {
+  text-align: center;
+  padding: 20px 0;
+  color: #7f8c8d;
+}
+
+.review-error {
+  color: #e74c3c;
+}
+
+/* Add these styles to your global.css file */
+
+/* Trash icon button styling */
+.trash-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  margin-top: 6px;
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+.trash-icon-button:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
+}
+
+.trash-icon-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(231, 76, 60, 0.3);
+}
+
+.trash-icon-button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.trash-icon-button svg {
+  display: block;
+}
+
+/* Improved confirmation modal styles - add to global.css */
+
+/* Modal overlay - darkens the entire screen */
+.confirmation-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+/* Modal content box */
+.confirmation-content {
+  background-color: white;
+  padding: 25px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: modalAppear 0.3s ease-out;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.confirmation-content h3 {
+  color: #2c3e50;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+  border-bottom: 1px solid #f1f1f1;
+  padding-bottom: 10px;
+}
+
+.confirmation-content p {
+  color: #34495e;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.confirmation-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+
+.cancel-button {
+  padding: 8px 15px;
+  background-color: #ecf0f1;
+  color: #7f8c8d;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: #dde4e6;
+}
+
+.confirm-button {
+  padding: 8px 15px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.confirm-button:hover {
+  background-color: #c0392b;
+}
+
+.confirm-button:active {
+  transform: scale(0.98);
+}
+
+.confirm-button:disabled,
+.cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Error Popup Styles - Add to your global.css file */
+
+.error-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.error-popup-content {
+  background-color: white;
+  padding: 25px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: popupAppear 0.3s ease-out;
+  text-align: center;
+  position: relative;
+}
+
+@keyframes popupAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.error-popup-content h3 {
+  color: #e74c3c;
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+.error-popup-content p {
+  color: #34495e;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  font-size: 1.1rem;
+}
+
+.close-error-button {
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.close-error-button:hover {
+  background-color: #2980b9;
+}
+
+/* src/styles/discussions.css */
+
+/* Discussions container */
+.course-discussions {
+  margin-top: 20px;
+}
+
+/* Discussions header */
+.discussions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.discussions-header h2 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.post-discussion-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.post-discussion-button:hover {
+  background-color: #2980b9;
+}
+
+/* Discussion form */
+.discussion-form-container {
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.discussion-form h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.discussion-title-container {
+  margin-bottom: 15px;
+}
+
+.discussion-title-container label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.discussion-title-container input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Write/Preview tabs */
+.discussion-tabs {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 15px;
+}
+
+.discussion-tabs .tab-button {
+  padding: 10px 15px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+  color: #7f8c8d;
+}
+
+.discussion-tabs .tab-button:hover {
+  color: #3498db;
+}
+
+.discussion-tabs .tab-button.active {
+  color: #3498db;
+  border-bottom-color: #3498db;
+}
+
+/* Discussion toolbar */
+.discussion-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.add-course-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #f0f0f0;
+  color: #2c3e50;
+  border: 1px solid #ddd;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.add-course-button:hover {
+  background-color: #e0e0e0;
+}
+
+/* Discussion textarea */
+.discussion-text-container {
+  margin-bottom: 15px;
+}
+
+.discussion-text-container textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 14px;
+  min-height: 150px;
+}
+
+.description-help {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #7f8c8d;
+}
+
+.description-help code {
+  background-color: #f0f0f0;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+/* Discussion preview */
+.discussion-preview-container {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 15px;
+  min-height: 150px;
+  margin-bottom: 15px;
+}
+
+.discussion-preview-container h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.discussion-preview-content {
+  color: #34495e;
+  line-height: 1.6;
+}
+
+.discussion-preview-content em {
+  color: #95a5a6;
+}
+
+/* Submit button */
+.submit-discussion-button {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.submit-discussion-button:hover {
+  background-color: #27ae60;
+}
+
+.submit-discussion-button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+/* Error/Success messages */
+.discussion-submit-error {
+  background-color: #fdedee;
+  color: #e74c3c;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.discussion-submit-success {
+  background-color: #e8f8f5;
+  color: #2ecc71;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+/* Course reference styling */
+.course-reference {
+  display: inline-flex;
+  align-items: center;
+  background-color: #eef7fb;
+  border: 1px solid #d1e9f6;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin: 0 2px;
+  white-space: nowrap;
+}
+
+.course-reference-icon {
+  margin-right: 4px;
+}
+
+.course-reference-title {
+  font-size: 13px;
+  color: #3498db;
+  font-weight: 500;
+}
+
+/* Discussions list */
+.discussions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.discussion-item {
+  background-color: white;
+  border-radius: 6px;
+  padding: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.discussion-header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.discussion-title {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #2c3e50;
+}
+
+.discussion-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.discussion-author {
+  font-weight: 600;
+  color: #34495e;
+}
+
+.discussion-date {
+  color: #7f8c8d;
+}
+
+.discussion-content {
+  margin-bottom: 15px;
+  color: #34495e;
+  line-height: 1.6;
+}
+
+.discussion-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.reply-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f8f9fa;
+  color: #34495e;
+  border: 1px solid #e0e0e0;
+  padding: 7px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.reply-button:hover {
+  background-color: #edf2f7;
+}
+
+.reply-button svg {
+  color: #95a5a6;
+}
+
+/* Empty state */
+.no-discussions {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.no-discussions p {
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+/* Loading and error states */
+.discussion-loading,
+.discussion-error {
+  text-align: center;
+  padding: 30px;
+  color: #7f8c8d;
+}
+
+.discussion-error {
+  color: #e74c3c;
+}
+
+/* Course selector modal */
+.course-selector-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.course-selector-content {
+  background-color: white;
+  padding: 25px;
+  border-radius: 8px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.course-selector-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #2c3e50;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+.course-selector-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.selector-add-button {
+  padding: 8px 15px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.selector-add-button:hover {
+  background-color: #2980b9;
+}
+
+.selector-cancel-button {
+  padding: 8px 15px;
+  background-color: #f0f0f0;
+  color: #7f8c8d;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.selector-cancel-button:hover {
+  background-color: #e0e0e0;
+}
+
+/* Course search styling */
+.course-search-container {
+  margin-bottom: 20px;
+}
+
+.course-search-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.course-search-input:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+.course-search-error {
+  color: #e74c3c;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.course-search-loading,
+.no-courses-found,
+.course-search-instructions {
+  padding: 20px;
+  text-align: center;
+  color: #7f8c8d;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+/* Course results list */
+.course-results-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.course-result-item {
+  display: flex;
+  padding: 15px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.course-result-item:hover {
+  background-color: #f5f9fc;
+}
+
+.course-result-item:last-child {
+  border-bottom: none;
+}
+
+.course-result-image {
+  width: 60px;
+  height: 60px;
+  margin-right: 15px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.course-result-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.placeholder-image {
+  width: 100%;
+  height: 100%;
+  background-color: #3498db;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.course-result-info {
+  flex: 1;
+}
+
+.course-result-title {
+  margin: 0 0 5px 0;
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+.course-result-platform {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  color: #3498db;
+}
+
+.course-result-authors {
+  margin: 0;
+  font-size: 13px;
+  color: #7f8c8d;
+}
+
+/* Referenced Courses Styles */
+.referenced-courses-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.referenced-course-chip {
+  display: inline-flex;
+  align-items: center;
+  background-color: #eef7fb;
+  border: 1px solid #d1e9f6;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+}
+
+.referenced-course-chip span {
+  margin-right: 0.5rem;
+  color: #3498db;
+}
+
+.remove-referenced-course-btn {
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+}
+
+.remove-referenced-course-btn:hover {
+  background-color: #f1f1f1;
+}
+
+.reply-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.reply-count:hover {
+  color: #333;
+}
+
+.reply-count svg {
+  stroke: #666;
+}
+
+.reply-count:hover svg {
+  stroke: #333;
+}
+
+/* Additional CSS for threaded replies */
+
+/* Reply thread container */
+.reply-thread {
+  margin-bottom: 16px;
+}
+
+/* Child replies styling - deeper nesting */
+.child-replies {
+  margin-left: 20px;
+  padding-left: 15px;
+  border-left: 2px solid #e0e0e0;
+}
+
+/* Nested reply form */
+.nested-reply-form {
+  margin-top: 12px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background-color: #f5f5f5;
+  border-radius: 6px;
+}
+
+.nested-reply-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 10px;
+}
+
+.reply-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.submit-nested-reply-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.submit-nested-reply-button:hover {
+  background-color: #2980b9;
+}
+
+.cancel-reply-button {
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ccc;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.cancel-reply-button:hover {
+  background-color: #f1f1f1;
+}
+
+/* Indentation styles */
+.reply-item {
+  position: relative;
+}
+
+/* Hover effect for reply threads */
+.reply-thread:hover > .reply-item {
+  background-color: #f9f9f9;
+}
+
+/* Reply button visibility */
+.reply-actions {
+  display: flex;
+  margin-top: 8px;
+}
+
+.reply-button {
+  background: none;
+  border: none;
+  color: #3498db;
+  font-size: 0.85rem;
+  padding: 0;
+  margin-right: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.reply-button:hover {
+  text-decoration: underline;
+}
+
+/* Refined styles for threaded replies to match screenshot */
+
+/* Selected discussion container */
+.selected-discussion-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  overflow: hidden;
+}
+
+.selected-discussion {
+  padding: 0;
+}
+
+.discussion-content {
+  padding: 20px;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+/* Main post author and date */
+.discussion-meta {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.discussion-author {
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-right: 10px;
+}
+
+.discussion-date {
+  color: #7c7c7c;
+  font-size: 0.9rem;
+}
+
+/* Main discussion body */
+.discussion-body {
+  line-height: 1.5;
+  color: #333;
+  font-size: 1rem;
+  word-break: break-word;
+}
+
+/* Replies container */
+.replies-container {
+  padding: 20px;
+  background-color: #f8f9fa;
+  margin-top: 0;
+  border-top: none;
+}
+
+.replies-container h3 {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+/* Reply list */
+.replies-list {
+  margin-bottom: 20px;
+}
+
+/* Reply thread */
+.reply-thread {
+  margin-bottom: 12px;
+}
+
+/* Reply item styling */
+.reply-item {
+  background-color: white;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 1px;
+  border: 1px solid #eaeaea;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Reply author/date styling */
+.reply-meta {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.reply-author {
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-right: 10px;
+  font-size: 0.9rem;
+}
+
+.reply-date {
+  color: #7c7c7c;
+  font-size: 0.85rem;
+}
+
+/* Reply text styling */
+.reply-text {
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+/* Reply actions */
+.reply-actions {
+  margin-top: 6px;
+}
+
+.reply-button {
+  background: none;
+  border: none;
+  color: #4f86c6;
+  font-size: 0.85rem;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.reply-button:hover {
+  text-decoration: underline;
+  color: #3a75c4;
+}
+
+/* Nested replies styling */
+.child-replies {
+  margin-left: 24px;
+  margin-top: 1px;
+  position: relative;
+}
+
+/* Thread line to visually connect nested replies */
+.child-replies:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -12px;
+  height: 100%;
+  width: 2px;
+  background-color: #e0e0e0;
+}
+
+/* Nested reply form */
+.nested-reply-form {
+  margin-top: 10px;
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 12px;
+}
+
+.nested-reply-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  resize: vertical;
+  margin-bottom: 10px;
+  min-height: 60px;
+}
+
+.nested-reply-form textarea:focus {
+  border-color: #4f86c6;
+  outline: none;
+}
+
+.reply-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.submit-nested-reply-button {
+  background-color: #4f86c6;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.submit-nested-reply-button:hover {
+  background-color: #3a75c4;
+}
+
+.cancel-reply-button {
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ccc;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.cancel-reply-button:hover {
+  background-color: #f5f5f5;
+}
+
+/* Main reply form container - add proper padding and border */
+.reply-form-container {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+/* Reply form styling */
+.reply-form {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 15px;
+  position: relative;
+}
+
+/* Fix textarea to have proper padding */
+.reply-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  resize: vertical;
+  font-size: 0.95rem;
+  min-height: 80px;
+  margin-bottom: 0; /* Remove bottom margin */
+}
+
+.reply-form textarea:focus {
+  border-color: #4f86c6;
+  outline: none;
+}
+
+/* Container for the button with proper spacing */
+.reply-form-button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+  padding: 0 15px 15px;
+}
+
+/* Post Reply button styling */
+.submit-reply-button {
+  background-color: #4f86c6;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.submit-reply-button:hover {
+  background-color: #3a75c4;
+}
+
+/* Fix for overall padding to ensure the button isn't too close to edges */
+.selected-discussion-container {
+  padding-bottom: 20px;
+}
+
+/* Back to discussions button */
+.back-to-discussions {
+  background-color: #4f86c6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  margin-right: 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.back-to-discussions:hover {
+  background-color: #3a75c4;
+}
+
+/* Replies list container - add padding to avoid cutting off first reply line */
+.replies-list {
+  margin-bottom: 20px;
+  padding-left: 2px; /* Ensure the first vertical line is visible */
+}
+
+/* Reply thread container */
+.reply-thread {
+  margin-bottom: 12px;
+  position: relative; /* Important for proper line positioning */
+}
+
+/* Improve thread line connections for all nesting levels */
+.child-replies {
+  position: relative;
+  margin-left: 24px;
+  margin-top: 1px;
+  padding-left: 12px; /* Space for the thread line */
+}
+
+/* Consistent thread line that won't get misaligned at deeper levels */
+.child-replies:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 2px;
+  background-color: #e0e0e0;
+}
+
+/* Thread connector - horizontal line that connects to the vertical line */
+.reply-thread .reply-item {
+  position: relative;
+}
+
+/* Better positioning for nested replies after the first level */
+.child-replies .child-replies {
+  margin-left: 20px; /* Slightly reduce margin for deeper nesting to prevent misalignment */
+}
+
+/* Add threading lines between parent and child replies */
+.reply-thread.has-children > .reply-item:after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: -12px;
+  width: 12px;
+  height: 2px;
+  background-color: #e0e0e0;
+}
+
+/* Ensure proper spacing for nested replies */
+.reply-thread.has-children {
+  margin-bottom: 0;
+}
+
+/* Enhanced styling for the reply item to work with the threading */
+.reply-item {
+  background-color: white;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin-bottom: 1px;
+  border: 1px solid #eaeaea;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 1; /* Ensure reply is above the connecting lines */
+}
+
+/* Optional: Add a hover effect to highlight the active thread */
+.reply-thread:hover > .child-replies:before {
+  background-color: #bbd0e8;
+}
+
+.reply-thread.has-children:hover > .reply-item:after {
+  background-color: #bbd0e8;
+}
+
+/* OP (Original Poster) indicator styling */
+
+/* Style for the OP tag */
+.op-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background-color: #4f86c6;
+  color: white;
+  border-radius: 3px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* When in the main discussion username */
+.discussion-author .op-tag {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+}
+
+/* Style for the reply-author when it's the OP */
+.reply-author.is-op {
+  color: #4f86c6; /* Highlight the OP's username in the same color */
+}
+
+.discussion-item {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.discussion-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  border-color: #d0d0d0;
+}
+
+/* Optional: add a subtle indicator to show it's clickable */
+.discussion-item:after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid #bbb;
+  border-right: 2px solid #bbb;
+  transform: rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.discussion-item:hover:after {
+  opacity: 1;
+}
+
+/* Fix for positioning of the arrow indicator */
+.discussion-item {
+  position: relative;
+}
+
+/* Make the title more prominent on hover */
+.discussion-item:hover .discussion-title {
+  color: #4f86c6;
+}
+
+/* Styling for delete functionality */
+
+/* Delete reply button */
+.delete-reply-button {
+  background: none;
+  border: none;
+  color: #e74c3c;
+  font-size: 0.85rem;
+  padding: 0;
+  margin-left: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.delete-reply-button:hover {
+  text-decoration: underline;
+}
+
+/* Delete confirmation dialog */
+.delete-confirmation {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background-color: #fff9f9;
+  border: 1px solid #ffecec;
+  border-radius: 4px;
+}
+
+.delete-confirmation p {
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.delete-confirmation-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancel-delete-button {
+  background-color: #f1f1f1;
+  color: #333;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.cancel-delete-button:hover {
+  background-color: #e5e5e5;
+}
+
+.confirm-delete-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.confirm-delete-button:hover {
+  background-color: #c0392b;
+}
+
+/* Styling for deleted replies */
+.reply-item.deleted .reply-text {
+  font-style: italic;
+  color: #888;
+}
+
+.reply-item.deleted .reply-author {
+  color: #888;
+}
+
+/* Icon button styles for reply and delete */
+
+.icon-button {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.85rem;
+  color: #666;
+  cursor: pointer;
+  margin-right: 16px;
+}
+
+.icon-button:hover {
+  color: #333;
+}
+
+.icon-button svg {
+  margin-right: 6px;
+}
+
+.reply-icon-button {
+  color: #4f86c6;
+}
+
+.reply-icon-button:hover {
+  color: #ffffff;
+}
+
+.delete-icon-button {
+  color: #e74c3c;
+}
+
+.delete-icon-button:hover {
+  color: #fe8c8c;
+}
+
+/* Button container */
+.reply-actions {
+  display: flex;
+  margin-top: 8px;
+}
+
+/* Style for reply text in deleted replies */
+.reply-item.deleted .reply-text {
+  font-style: italic;
+  color: #888;
+}
+
+/* Updated styling for discussions to match the mockup */
+
+/* Remove the title from the discussions-header section */
+.discussions-header h2 span {
+  display: none;
+}
+
+/* Container for the discussion content */
+.discussion-content {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Discussion meta information */
+.discussion-meta {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+/* User details */
+.discussion-author {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1a1a1a;
+  margin-right: 15px;
+}
+
+/* OP tag styling */
+.op-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background-color: #4f86c6;
+  color: white;
+  border-radius: 3px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Date styling */
+.discussion-date {
+  color: #7c7c7c;
+  font-size: 0.9rem;
+}
+
+/* Title repositioned under the author */
+.discussion-title-repositioned {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #333;
+  margin: 12px 0 16px 0;
+  line-height: 1.3;
+}
+
+/* Discussion body */
+.discussion-body {
+  margin-top: 0;
+  line-height: 1.5;
+  color: #333;
+  font-size: 1rem;
+  padding-bottom: 10px;
+}
+
+/* Ensure proper spacing for course references */
+.course-reference {
+  display: inline-flex;
+  align-items: center;
+  background-color: #eef7fb;
+  border: 1px solid #d1e9f6;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: 0 4px;
+  white-space: nowrap;
+}
+
+/* Style the back button */
+.back-to-discussions {
+  color: white;
+  background-color: #4f86c6;
+  padding: 8px 16px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.back-to-discussions:hover {
+  background-color: #3a75c4;
+}
+
+/* Container for the entire discussion */
+.selected-discussion-container {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.selected-discussion {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Replies container styling */
+.replies-container {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-top: 1px solid #e6e6e6;
+}
+
+.replies-container h3 {
+  font-size: 1.1rem;
+  color: #333;
+  margin: 0 0 20px 0;
+  font-weight: 600;
+}
+
+/* Updated styling for the Back to Discussions button */
+
+/* Updated styling for the Back to Discussions button - no blue rectangle */
+
+/* Updated styling for the Back to Discussions button with underline on hover */
+
+.back-to-discussions {
+  background: transparent !important; /* Force no background */
+  border: none;
+  color: #4f86c6;
+  padding: 8px 0;
+  font-size: 1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  margin-bottom: 20px;
+  transition: all 0.2s ease;
+  box-shadow: none !important; /* Remove any shadow */
+  text-decoration: none;
+  outline: none; /* Remove outline on focus */
+}
+
+.back-to-discussions:hover {
+  color: #3a75c4; /* Darker blue on hover */
+  transform: translateY(-2px); /* Slight float effect */
+  background: transparent !important; /* Ensure no background on hover */
+  box-shadow: none !important; /* Ensure no shadow on hover */
+  text-decoration: underline; /* Add underline on hover */
+}
+
+.back-to-discussions:before {
+  content: "←";
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+/* Override any active or focus states */
+.back-to-discussions:active,
+.back-to-discussions:focus {
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+/* Override any existing styling that might be applying the blue rectangle */
+.discussions-header h2 button {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.discussions-header h2 button:hover,
+.discussions-header h2 button:active,
+.discussions-header h2 button:focus {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Updated styling for the Back to Courses button - no blue rectangle */
+
+.back-button {
+  background: transparent !important; /* Force no background */
+  border: none;
+  color: #4f86c6;
+  padding: 8px 0;
+  font-size: 1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  margin-bottom: 20px;
+  transition: all 0.2s ease;
+  box-shadow: none !important; /* Remove any shadow */
+  text-decoration: none;
+  outline: none; /* Remove outline on focus */
+}
+
+.back-button:hover {
+  color: #3a75c4; /* Darker blue on hover */
+  transform: translateY(-2px); /* Slight float effect */
+  background: transparent !important; /* Ensure no background on hover */
+  box-shadow: none !important; /* Ensure no shadow on hover */
+}
+
+/* Override any active or focus states */
+.back-button:active,
+.back-button:focus {
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+/* Style for the arrow */
+.back-button::before {
+  content: "←"; /* Add the arrow as content */
+  margin-right: 8px;
+  display: inline-block;
 }

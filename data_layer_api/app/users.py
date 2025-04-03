@@ -57,6 +57,37 @@ def get_users():
     finally:
         database.close()
 
+# Add this route to your users_bp Blueprint in users.py
+
+@users_bp.route('/<user_id>', methods=['GET'])
+def get_user_by_id_route(user_id):
+    database = get_vector_db()
+    try:
+        # Get user from the database
+        user = database.get_user_by_id(user_id)
+        
+        if user is None:
+            return jsonify({"error": "User not found"}), 404
+        
+        # Remove sensitive information
+        if "password" in user:
+            del user["password"]
+        if "salt" in user:
+            del user["salt"]
+        if "id" in user:
+            del user["id"]
+        
+        # Convert UUID and datetime objects to strings for JSON serialization
+        for key, value in user.items():
+            if isinstance(value, (uuid.UUID, object)):
+                user[key] = str(value)
+        
+        return jsonify(user)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        database.close()
+
 @users_bp.route('/validatePassword', methods=['POST'])
 def validate_password():
     payload = request.get_json()
@@ -89,8 +120,8 @@ def check_username():
     database = get_vector_db()  # Get a connection to the database
     
     try:
-        # Use the find_by_username method to fetch the user
-        user = database.find_by_username(username)
+        # Use the get_user_by_username method to fetch the user
+        user = database.get_user_by_username(username)
 
         if user is not None:
             return jsonify({'isAvailable': False, 'message': 'Username is already taken.'})
@@ -131,35 +162,48 @@ def check_email():
         database.close()
 
 def _get_full_user(username):
-    # this is a backend function to get everything on the user, including the password and salt
+    # This is a backend function to get everything on the user, including the password and salt
     database = get_vector_db()  # Get a connection to the database
     
     try:
-        # Use the find_by_username method to fetch the user
-        user = database.find_by_username(username)
+        # Use the get_user_by_username method to fetch the user
+        user = database.get_user_by_username(username)
 
         if user is None:
-            return jsonify({"error": "User not found"}), 404
+            return None
         
+        # Convert UUID and datetime objects to strings for JSON serialization
+        user_dict = {}
         for key, value in user.items():
             if isinstance(value, (uuid.UUID, object)):
-                user[key] = str(value)
+                user_dict[key] = str(value)
+            else:
+                user_dict[key] = value
 
-        return user
+        return user_dict
 
     except Exception as e:
-        # Handle unexpected errors and return them in the response
+        # Handle unexpected errors
+        print(f"Error in _get_full_user: {str(e)}")
         return None
 
     finally:
         database.close()
 
 def get_user(username):
-    # this is to get the user without the password and salt
+    # This is to get the user without the password and salt
     user = _get_full_user(username)
-    del user["password"]
-    del user["salt"]
-    del user['id']
+    
+    if user is None:
+        return None
+        
+    # Remove sensitive information
+    if "password" in user:
+        del user["password"]
+    if "salt" in user:
+        del user["salt"]
+    
+    return user
 
 @users_bp.route('/insert', methods=['POST'])
 @cross_origin()
@@ -206,16 +250,30 @@ def login():
     password = payload["password"]
 
     user = _get_full_user(username)
-    if user is None:
-        return jsonify({"successful": False})
-
-    if not verify_password(user["salt"], user["password"], password):
-        return jsonify({"successful": False})
     
-    # now create the login token
+    # Check if user is a tuple (error response from _get_full_user)
+    if isinstance(user, tuple):
+        # This means an error occurred in _get_full_user
+        return jsonify({"successful": False, "message": "Invalid username or password"})
+    
+    # Check if user is None
+    if user is None:
+        return jsonify({"successful": False, "message": "Invalid username or password"})
+
+    # Now we know user is a dictionary, we can proceed
+    if not verify_password(user["salt"], user["password"], password):
+        return jsonify({"successful": False, "message": "Invalid username or password"})
+    
+    # Create the login token
     access_token = create_access_token(identity=str(user["id"]), expires_delta=timedelta(hours=1))
     
-    return jsonify({"successful": True, "access_token": access_token})
+    # Return successful login with user_id for client-side storage
+    return jsonify({
+        "successful": True, 
+        "access_token": access_token,
+        "user_id": user["id"],
+        "username": user["username"]
+    })
 
 def encode_base64(data):
     return base64.b64encode(data).decode('utf-8')
