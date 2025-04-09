@@ -91,7 +91,7 @@ export const getCourseDetails = async (courseId) => {
 // New functions for reviews
 
 // Submit a course review
-export const submitCourseReview = async (userId, courseId, rating, description) => {
+export const submitCourseReview = async (courseId, rating, description) => {
   try {
     const response = await fetch(`${API_BASE_URL}/course/${courseId}/review`, {
       method: 'POST',
@@ -100,7 +100,6 @@ export const submitCourseReview = async (userId, courseId, rating, description) 
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
       body: JSON.stringify({
-        user_id: userId,
         rating: rating,
         description: description
       })

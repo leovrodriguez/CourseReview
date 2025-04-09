@@ -189,6 +189,10 @@ def insert_user():
     email = payload["email"]
     password = payload["password"]
     database = get_vector_db()
+    
+    # validate these values
+
+
     decoded_salt = generate_salt()
     hashed_password = hash_password(password, decoded_salt)
     salt_string = encode_base64(decoded_salt)

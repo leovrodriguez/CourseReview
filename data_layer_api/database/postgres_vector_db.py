@@ -116,7 +116,6 @@ class PostgresVectorDB(VectorDB):
             );
             """)
             self.conn.commit()
-   
     
 # Course Queries    
     def insert_course(self, course: Course, vector: List[float]):
@@ -335,6 +334,8 @@ class PostgresVectorDB(VectorDB):
                     course_dict[key] = value.isoformat()
                     
             return course_dict
+        
+        return None
         
     def find_by_email(self, email):
         """
@@ -736,6 +737,39 @@ class PostgresVectorDB(VectorDB):
                 discussions.append(discussion_dict)
                 
             return discussions
+        
+    def get_discussion_by_id(self, discussion_id):
+        """
+        Get a discussion by the id.
+        
+        Args:
+            discussion_id (str): The id for the discussion
+            
+        Returns:
+            dict: A dictionary containing the user information or None if not found
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT * FROM discussions WHERE id = %s",
+                [discussion_id]
+            )
+            
+            columns = [desc[0] for desc in cursor.description]
+            dicussion = cursor.fetchone()
+            
+            if dicussion:
+                discussion_dict = dict(zip(columns, dicussion))
+
+                # Convert UUID and datetime to strings for JSON serialization
+                for key, value in discussion_dict.items():
+                    if isinstance(value, UUID):
+                        discussion_dict[key] = str(value)
+                    elif isinstance(value, datetime):
+                        discussion_dict[key] = value.isoformat()
+                    
+                return discussion_dict
+                
+        return None
 
     def insert_discussion(self, discussion: Discussion, vector: List[float]):
         """
@@ -795,6 +829,31 @@ class PostgresVectorDB(VectorDB):
             self.conn.commit()
             
         return rows_deleted > 0
+    
+    def edit_discussion(self, discussion_id, new_title, new_description):
+        """
+        Edit a discussion in the database.
+        
+        Args:
+            discussion_id (UUID): The ID of the discussion to edit
+            new_title (str): The new title for the discussion
+            new_description (str): The new description for the discussion
+            
+        Returns:
+            bool: True if the update was successful, False otherwise
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("""
+                UPDATE discussions 
+                SET title = %s, description = %s 
+                WHERE id = %s
+            """, [new_title, new_description, discussion_id])
+            
+            # Check if any rows were updated
+            rows_updated = cursor.rowcount
+            self.conn.commit()
+            
+        return rows_updated > 0
 
     def get_discussions_by_course(self, course_id):
         """
@@ -1070,6 +1129,33 @@ class PostgresVectorDB(VectorDB):
             self.conn.commit()
             
         return rows_deleted > 0
+    
+    def get_like(self, object_id, user_id, object_type: LikeObjectType):
+        """
+        Get a like by object ID and user ID.
+        
+        Args:
+            object_id (UUID): The ID of the liked object
+            user_id (UUID): The ID of the user who liked the object
+            object_type (LikeObjectType or str): The type of the liked object
+            
+        Returns:
+            dict: A dictionary containing the like information or None if not found
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT * FROM likes 
+                WHERE user_id = %s AND object_id = %s AND object_type = %s
+            """, [user_id, object_id, object_type.value])
+            
+            columns = [desc[0] for desc in cursor.description]
+            like = cursor.fetchone()
+            
+            if like:
+                like_dict = dict(zip(columns, like))
+                return like_dict
+                
+        return None
 
     def get_liked_courses_by_user(self, user_id):
         """
@@ -1128,7 +1214,7 @@ class PostgresVectorDB(VectorDB):
             int: The number of likes
         """
         object_type = object_type.value
-            
+        
         with self.conn.cursor() as cursor:
             cursor.execute(
                 "SELECT COUNT(*) FROM likes WHERE object_id = %s AND object_type = %s",
@@ -1138,7 +1224,6 @@ class PostgresVectorDB(VectorDB):
             count = cursor.fetchone()[0]
             
         return count
-    
 
 # Vector Search Queries
     def query_course_vector(self, query_vector: List[float], limit: int = 10, threshold: float = 0.5, similarity_weight: float = .7):

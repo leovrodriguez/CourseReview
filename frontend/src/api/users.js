@@ -60,11 +60,33 @@ export const userLogin = async (userData) => {
 
     if (data.successful) {
       console.log("Login successful");
-      localStorage.setItem("userToken", data.access_token);
+      localStorage.setItem("token", data.access_token);
       console.log("userToken:", data.access_token);
     } else {
       console.log("Login failed");
     }
+  } catch (error) {
+    console.error('Error creating user:', error);
+    throw error;
+  }
+};
+
+export const validateToken = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/protected/validateToken`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Error validating token`);
+    }
+    const data = await response.json();
+
+    return data.isValid;
+
   } catch (error) {
     console.error('Error creating user:', error);
     throw error;

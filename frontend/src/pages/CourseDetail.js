@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCourseDetails, submitCourseReview } from '../api/courses';
+import { validateToken } from '../api/users';
 import { useReviews } from '../hooks/useReviews';
 import CourseReviews from '../components/courses/CourseReviews';
 import CourseDiscussions from '../components/courses/CourseDiscussions';
@@ -139,7 +140,7 @@ const CourseDetail = () => {
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     
-    if (!isLoggedIn || !userId) {
+    if (!isLoggedIn || !validateToken()) {
       setSubmitError('You must be logged in to submit a review');
       setTimeout(() => {
         navigate('/login');
@@ -155,12 +156,10 @@ const CourseDetail = () => {
     try {
       setSubmitting(true);
       setSubmitError(null);
-      
-      console.log('Submitting review with userId:', userId);
-      
+            
       try {
         // Try to use the API function first
-        await submitCourseReview(userId, courseId, rating, review.trim() || null);
+        await submitCourseReview(courseId, rating, review.trim() || null);
         
         // Show success message
         setSubmitSuccess(true);

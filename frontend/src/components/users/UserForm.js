@@ -31,14 +31,9 @@ const UserForm = ({ onSubmit }) => {
         throw new Error("Error checking username");
       }
       const data = await response.json();
-      if (!data.isAvailable) {
-        // set the error to be displayed
-        setUsernameError(data.message);
-        return false;
-      } else {
-        setUsernameError("");
-        return true;
-      }
+      // set the error to be displayed
+      setUsernameError(data.message);
+      return data.isAvailable;
     } catch (error) {
       console.error("Error checking username:", error);
       setUsernameError("Error checking username availability");
@@ -65,13 +60,9 @@ const UserForm = ({ onSubmit }) => {
         throw new Error("Error checking email");
       }
       const data = await response.json();
-      if (!data.isAvailable) {
-        setEmailError(data.message);
-        return false;
-      } else {
-        setEmailError("");
-        return true;
-      }
+      setEmailError(data.message);
+      return data.isAvailable;
+      
     } catch (error) {
       console.error("Error checking email:", error);
       setEmailError("Error checking email availability");

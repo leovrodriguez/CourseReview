@@ -3,10 +3,11 @@ from database.db_factory import get_vector_db
 from classes.course import Course, CourseReview
 from classes.discussion import Discussion
 from classes.reply import Reply
+from classes.like import Like
 from embedder.embedder import get_embedding, embed_course_vector, embed_discussion_vector, embed_reply_vector
 from flask_jwt_extended import decode_token
 from uuid import UUID
-from protected import validate_token, get_user_id
+from protected import auth_add_like, auth_remove_like, get_user_id_from_request
 course_bp = Blueprint('course', __name__)
 
 @course_bp.route('/', methods=['GET'])
@@ -107,8 +108,13 @@ def get_course_reviews(course_id):
 
 @course_bp.route('/<course_id>/review', methods=['POST'])
 def review_course(course_id):
+    # validate first
+    user_id = get_user_id_from_request(request)
+    if user_id is None:
+        return jsonify({"error": "Invalid token"}), 401
+    
     payload = request.get_json()
-    user_id = payload.get("user_id")
+
     rating = payload.get("rating")
     description = payload.get("description", None)
     
@@ -207,14 +213,11 @@ def query_course():
 
 @course_bp.route('/review', methods=['POST'])
 def review_course():
+    user_id = get_user_id_from_request(request)
+    if user_id is None:
+        return jsonify({"error": "Invalid token"}), 401
+    
     payload = request.get_json()
-
-    # validate the user
-    token = payload["token"]
-
-    user_id = get_user_id(token)
-    if token is None:
-        return jsonify({"error": "Unauthorized"}), 401
 
     course_id = payload.get("course_id")
     rating = payload.get("rating")
@@ -615,23 +618,22 @@ def delete_reply(course_id, discussion_id, reply_id):
         except ValueError:
             return jsonify({"error": "Invalid reply ID format"}), 400
         
-        # Get request payload
-        payload = request.get_json()
-        
-        # Validate required fields
-        if not payload.get("user_id"):
-            return jsonify({"error": "Missing required field: user_id is required"}), 400
-        
-        user_id = payload["user_id"]
-        
-        # Validate user_id format
-        try:
-            user_uuid = UUID(user_id)
-        except ValueError:
-            return jsonify({"error": "Invalid user ID format"}), 400
+        # validate first
+        user_id = get_user_id_from_request(request)
+        if user_id is None:
+            return jsonify({"error": "Invalid token"}), 401
         
         # Get database connection
         database = get_vector_db()
+
+        # check that this is the owner of the reply
+        reply = database.get_reply_by_id(reply_id)
+        if reply is None:
+            database.close()
+            return jsonify({"error": "Reply not found"}), 404
+        if reply.user_id != user_id:
+            database.close()
+            return jsonify({"error": "You are not the owner of this reply"}), 403
         
         # Update the reply text to '[deleted]'
         success = database.update_reply_text(reply_id, "[deleted]")
@@ -647,3 +649,72 @@ def delete_reply(course_id, discussion_id, reply_id):
         # Log the error for debugging
         print(f"Error deleting reply: {str(e)}")
         return jsonify({"error": str(e)}), 500
+    
+def get_reply_by_id(reply_id):
+    database = get_vector_db()
+    reply = database.get_reply_by_id(reply_id)
+    database.close()
+    return reply
+
+@course_bp.route('/like_reply', methods=['POST'])
+def like_reply():
+    # validate first
+    user_id = get_user_id_from_request(request)
+    if user_id is None:
+        return jsonify({"error": "Invalid token"}), 401
+    
+    payload = request.get_json()
+    
+    reply_id = payload["reply_id"]
+
+    return auth_add_like(user_id, reply_id, 'reply', get_reply_by_id)
+
+@course_bp.route('/unlike_reply', methods=['POST'])
+def unlike_reply():
+    # validate first
+    user_id = get_user_id_from_request(request)
+    if user_id is None:
+        return jsonify({"error": "Invalid token"}), 401
+    
+    payload = request.get_json()
+    
+    reply_id = payload["reply_id"]
+
+    return auth_remove_like(user_id, reply_id, 'reply', get_reply_by_id)
+    
+def get_course_by_id(course_id):
+        database = get_vector_db()
+        course = database.get_course_by_id(course_id)
+        database.close()
+        return course
+
+@course_bp.route('/like', methods=['POST'])
+def like_course():
+    # validate first
+    user_id = get_user_id_from_request(request)
+    if user_id is None:
+        return jsonify({"error": "Invalid token"}), 401
+    
+    payload = request.get_json()
+    
+    course_id = payload["course_id"]
+
+    return auth_add_like(user_id, course_id, 'course', get_course_by_id)
+
+@course_bp.route('/unlike', methods=['POST'])
+def unlike_course():
+    # validate first
+    user_id = get_user_id_from_request(request)
+    if user_id is None:
+        return jsonify({"error": "Invalid token"}), 401
+    
+    payload = request.get_json()
+    
+    course_id = payload["course_id"]
+
+    return auth_remove_like(user_id, course_id, 'course', get_course_by_id)
+    
+    
+    
+
+ 
