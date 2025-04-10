@@ -26,6 +26,9 @@ const Register = () => {
       if (!response.ok) {
         throw new Error(data.message || data.error || 'Registration failed');
       }
+      if (!data.success) {
+        return data;
+      }
       
       console.log("Registration successful:", data);
       
@@ -49,6 +52,9 @@ const Register = () => {
       setTimeout(() => {
         navigate('/');
       }, 2000);
+      return {
+        success: true
+      };
     } catch (err) {
       console.error('Registration error:', err);
       setError(err.message || 'Failed to register. Please try again.');

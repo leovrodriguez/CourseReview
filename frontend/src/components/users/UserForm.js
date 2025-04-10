@@ -14,86 +14,55 @@ const UserForm = ({ onSubmit }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // async function to validate username
-  const validateUsername = async () => {
+  const validateUsername = () => {
     if (username.length < 3) {
       setUsernameError("Username must be at least 3 characters.");
-      return false;
-    }
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/checkUsername`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username }),
-      });
-      if (!response.ok) {
-        throw new Error("Error checking username");
-      }
-      const data = await response.json();
-      // set the error to be displayed
-      setUsernameError(data.message);
-      return data.isAvailable;
-    } catch (error) {
-      console.error("Error checking username:", error);
-      setUsernameError("Error checking username availability");
       return false;
     }
   };
 
   // async function to validate email
-  const validateEmail = async () => {
+  const validateEmail = () => {
     const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/g;
     if (!emailRegex.test(email)) {
       setEmailError("Invalid email format (e.g., johndoe@example.com).");
       return false;
     }
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/checkEmail`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-      if (!response.ok) {
-        throw new Error("Error checking email");
-      }
-      const data = await response.json();
-      setEmailError(data.message);
-      return data.isAvailable;
-      
-    } catch (error) {
-      console.error("Error checking email:", error);
-      setEmailError("Error checking email availability");
-      return false;
-    }
+    return true
   };
 
-  const validatePassword = async () => {
+  const validatePassword = () => {
     const specialCharacterRegex = /[!@#$%^&*(),.?":{}|<>]/;
     const uppercaseRegex = /[A-Z]/;
     const numberRegex = /[0-9]/;
-
+  
     if (!password.trim()) {
-      setPasswordError('Password cannot be blank');
+      return { isValid: false, message: 'Password cannot be blank' };
+    }
+  
+    const issues = [];
+  
+    if (password.length < 8) {
+      issues.push('at least 8 characters');
+    }
+    if (!specialCharacterRegex.test(password)) {
+      issues.push('include at least one special character');
+    }
+    if (!uppercaseRegex.test(password)) {
+      issues.push('include at least one uppercase letter');
+    }
+    if (!numberRegex.test(password)) {
+      issues.push('include at least one number');
+    }
+  
+    if (issues.length > 0) {
+      const message = 'Password must be ' + issues.join(', ') + '.';
+      setPasswordError(message);
       return false;
     }
-
-    if (
-      password.length < 8 ||
-      !specialCharacterRegex.test(password) ||
-      !numberRegex.test(password) ||
-      !uppercaseRegex.test(password)
-    ) {
-      setPasswordError("Password must be at least 8 characters, at least one special character, at least one uppercase letter, and at least one number.");
-      return false;
-    }
-
-    setPasswordError("");
     return true;
-  };
-
+  }
+ 
   const validateConfirmPassword = () => {
     if (password !== confirmPassword) {
       setConfirmPasswordError("Passwords do not match");
@@ -102,7 +71,7 @@ const UserForm = ({ onSubmit }) => {
     setConfirmPasswordError("");
     return true;
   };
- 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -128,9 +97,9 @@ const UserForm = ({ onSubmit }) => {
       }
 
       // Run all validations
-      const isUsernameValid = await validateUsername();
-      const isEmailValid = await validateEmail();
-      const isPasswordValid = await validatePassword();
+      const isUsernameValid = validateUsername();
+      const isEmailValid = validateEmail();
+      const isPasswordValid = validatePassword();
       const isConfirmPasswordValid = validateConfirmPassword();
 
       // Check if all validations passed
@@ -140,13 +109,31 @@ const UserForm = ({ onSubmit }) => {
       }
 
       // All validations passed, call the onSubmit function
+      
+      const result = await onSubmit({ username, email, password });
+
+      if (!result.success) {
+        console.log("Form validation failed due to validation errors");
+        setError(result.message || "Failed to create account.");
+        if (result.usernameError) {
+          setUsernameError(result.usernameError);
+        }
+        if (result.emailError) {
+          setEmailError(result.emailError);
+        }
+        if (result.passwordError) {
+          setPasswordError(result.passwordError);
+        }
+        setIsSubmitting(false); // Show form again
+        return;
+      }
       console.log("Form validation passed - submitting user data");
-      onSubmit({ username, email, password });
+      setIsSubmitting(true)
     } catch (err) {
       console.error("Error during form submission:", err);
-      setError("An unexpected error occurred. Please try again.");
+      setError("An error occurred while creating your account. Please try again.");
       setIsSubmitting(false);
-    }
+    } 
   };
 
   return (

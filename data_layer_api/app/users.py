@@ -63,33 +63,45 @@ def get_user_by_id_route(user_id):
         database.close()
 
 @users_bp.route('/validatePassword', methods=['POST'])
-def validate_password():
+def _validate_password():
     payload = request.get_json()
     password = payload["password"]
-
-    special_character_regex = re.compile(r'[!@#$%^&*(),.?":{}|<>]')
+    return validate_password(password)
+        
+def validate_password(password):
+    special_character_regex = re.compile(r'[!@#$%^&*(),.?":{}|<>-]')
     uppercase_regex = re.compile(r'[A-Z]')
     number_regex = re.compile(r'[0-9]')
 
     if not password.strip():
         return jsonify({'isValid': False, 'message': 'Password cannot be blank'})
 
-    if (len(password) < 8 or 
-        not special_character_regex.search(password) or 
-        not uppercase_regex.search(password) or 
-        not number_regex.search(password)):
-        return jsonify({'isValid': False, 'message': 'Password must be at least 8 characters, include at least one special character one uppercase letter, and one number.'})
-
+    issues = []
+    if (len(password) < 8):
+        issues.append('at least 8 characters')
+    if not special_character_regex.search(password):
+        issues.append('includ at least one special character')
+    if not uppercase_regex.search(password):
+        issues.append('include at least one uppercase letter')
+    if not number_regex.search(password):
+        issues.append('include at least one number')
+    
+    if issues:
+        message = "Password must be" + ', '.join(issues) + '.'
+        return jsonify({'isValid': False, 'message': message})
+    
     return jsonify({'isValid': True, 'message': 'Password is valid.'})
 
 @users_bp.route('/checkUsername', methods=['POST'])
 def check_username():
     payload = request.get_json()
     username = payload["username"]
+    return validate_username(username)
 
+def validate_username(username):
     # check if length is greater than 3
     if len(username) < 3:
-        return jsonify({'isAvailable': False, 'message': 'Username must be at least 3 characters long.'})
+        return jsonify({'isValid': False, 'message': 'Username must be at least 3 characters long.'})
 
     database = get_vector_db()  # Get a connection to the database
     
@@ -98,13 +110,13 @@ def check_username():
         user = database.get_user_by_username(username)
 
         if user is not None:
-            return jsonify({'isAvailable': False, 'message': 'Username is already taken.'})
+            return jsonify({'isValid': False, 'message': 'Username is already taken.'})
         
-        return jsonify({'isAvailable': True, 'message': 'Username is available.'})
+        return jsonify({'isValid': True, 'message': 'Username is available.'})
 
     except Exception as e:
         # Handle unexpected errors and return them in the response
-        return jsonify({"error loading the database"}), 500
+        return jsonify({'isValid': False, "error": "error loading the database"}), 500
 
     finally:
         database.close()
@@ -113,10 +125,12 @@ def check_username():
 def check_email():
     payload = request.get_json()
     email = payload["email"]
+    return validate_email(email)
 
+def validate_email(email):
     email_regex = re.compile(r'^[\w\.-]+@([\w-]+\.)+[\w-]{2,4}$')
     if not email_regex.match(email):
-        return jsonify({'isAvailable': False, 'message': 'Invalid email format (e.g., johndoe@example.com).'})
+        return jsonify({'isValid': False, 'message': 'Invalid email format (e.g., johndoe@example.com).'})
 
     database = get_vector_db()  # Get a connection to the database
     
@@ -124,13 +138,13 @@ def check_email():
         user = database.find_by_email(email)
 
         if user is not None:
-            return jsonify({'isAvailable': False, 'message': 'Email is already taken.'})
+            return jsonify({'isValid': False, 'message': 'Email is already taken.'})
         
-        return jsonify({'isAvailable': True, 'message': 'Email is available.'})
+        return jsonify({'isValid': True, 'message': 'Email is available.'})
 
     except Exception as e:
         # Handle unexpected errors and return them in the response
-        return jsonify({"error with connecting to database"}), 500
+        return jsonify({'isValid': False, "error": "error with connecting to database"}), 500
 
     finally:
         database.close()
@@ -186,10 +200,25 @@ def insert_user():
     username = payload["username"]
     email = payload["email"]
     password = payload["password"]
-    database = get_vector_db()
-    
-    # validate these values
 
+    # Validate the password
+    password_validation = validate_password(password)
+    username_validation = validate_username(username)
+    email_validation = validate_email(email)
+    if not password_validation.json['isValid'] or not username_validation.json['isValid'] or not email_validation.json['isValid']:
+        errors = {"success": False, "error": 'Invalid input',
+                  "password_error": "",
+                    "username_error": "",
+                   "email_error": ""}, 401
+        if not password_validation.json['isValid']:
+            errors["password_error"] = password_validation.json['message']
+        if not username_validation.json['isValid']:
+            errors["username_error"] = username_validation.json['message']
+        if not email_validation.json['isValid']:
+            errors["email_error"] = email_validation.json['message']
+        return jsonify(errors)
+
+    database = get_vector_db()
 
     decoded_salt = generate_salt()
     hashed_password = hash_password(password, decoded_salt)
@@ -201,18 +230,8 @@ def insert_user():
     # now create the login token
     access_token = create_access_token(identity=str(user_id), expires_delta=timedelta(hours=1))
 
-    try:
-        # Decode the token and check for validity
-        decoded_token = decode_token(access_token)
-        
-        # If decoding was successful, the token is valid and has not expired
-        print(f"Token decodes to:{decode_token}")
-    except Exception as e:
-        # If decoding fails (e.g., expired or tampered token), handle it here
-        print('invalid token')
-
     # Implement search logic here
-    return jsonify({"message": "User Inserted Successfully",
+    return jsonify({"success": True, "message": "User Inserted Successfully",
                     "user_id": user_id,
                     "username": username,
                     "email": email,
