@@ -99,7 +99,6 @@ class PostgresVectorDB(VectorDB):
                 user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 discussion_id UUID NOT NULL REFERENCES discussions(id) ON DELETE CASCADE,
                 parent_reply_id UUID REFERENCES replies(id) ON DELETE CASCADE,
-                parent_reply_id UUID REFERENCES replies(id) ON DELETE CASCADE,
                 text TEXT NOT NULL,
                 embedding vector(768) NOT NULL, -- Added vector embedding
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -1097,7 +1096,7 @@ class PostgresVectorDB(VectorDB):
             Dict: Reply
         """
         with self.conn.cursor() as cursor:
-            cursor.execute("SELECT * replies WHERE id = %s", [reply_id])
+            cursor.execute("SELECT * FROM replies WHERE id = %s", [reply_id])
             
             columns = [desc[0] for desc in cursor.description]
             reply = cursor.fetchone()
