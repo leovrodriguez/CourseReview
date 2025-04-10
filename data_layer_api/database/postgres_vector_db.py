@@ -1052,10 +1052,67 @@ class PostgresVectorDB(VectorDB):
             
             return results
 
-    
-
     #TODO
     def get_replies_by_user(self, user_id):
+        """
+        Get all replies for a specific discussion.
+        
+        Args:
+            discussion_id (UUID): The ID of the discussion
+            
+        Returns:
+            List[Dict]: List of replies the user made
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("SELECT * replies WHERE user_id = %s", [user_id])
+
+            columns = [desc[0] for desc in cursor.description]
+            results = []
+
+            for row in cursor.fetchall():
+                # Convert row to dictionary
+                reply_dict = dict(zip(columns, row))
+                
+                # Convert UUID and datetime objects to strings for JSON serialization
+                for key, value in reply_dict.items():
+                    if isinstance(value, UUID):
+                        reply_dict[key] = str(value)
+                    elif isinstance(value, datetime):
+                        reply_dict[key] = value.isoformat()
+                
+                results.append(reply_dict)
+            
+            return results
+                
+        return None
+    
+    def get_replies_by_id(self, reply_id):
+        """
+        Get reply from id.
+        
+        Args:
+            reply_id (UUID): The ID of the reply
+            
+        Returns:
+            Dict: Reply
+        """
+        with self.conn.cursor() as cursor:
+            cursor.execute("SELECT * replies WHERE id = %s", [reply_id])
+            
+            columns = [desc[0] for desc in cursor.description]
+            reply = cursor.fetchone()
+            
+            if reply:
+                reply_dict = dict(zip(columns, reply))
+
+                for key, value in reply_dict.items():
+                    if isinstance(value, UUID):
+                        reply_dict[key] = str(value)
+                    elif isinstance(value, datetime):
+                        reply_dict[key] = value.isoformat()
+                
+                return reply_dict
+                
         return None
 
 # Like Queries
