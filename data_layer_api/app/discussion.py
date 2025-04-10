@@ -34,7 +34,7 @@ discussion_bp = Blueprint('discussion', __name__)
 @jwt_required()
 def post_discussion():
     # validate first
-    user_id = j
+    user_id = get_jwt_identity()
     if user_id is None:
         return jsonify({"error": "Invalid token"}), 401
 
