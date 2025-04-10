@@ -68,7 +68,7 @@ const UserForm = ({ onSubmit }) => {
       setConfirmPasswordError("Passwords do not match");
       return false;
     }
-    setConfirmPasswordError("");
+    setConfirmPasswordError(""); // Clear error if passwords match
     return true;
   };
 
