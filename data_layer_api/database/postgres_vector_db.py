@@ -1086,7 +1086,7 @@ class PostgresVectorDB(VectorDB):
                 
         return None
     
-    def get_replies_by_id(self, reply_id):
+    def get_reply_by_id(self, reply_id):
         """
         Get reply from id.
         
