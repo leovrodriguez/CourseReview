@@ -8,7 +8,7 @@ def create_app():
     
     # Generate a random secret key for JWT
     def generate_secret_key():
-        return 'super-secret-key'#binascii.hexlify(os.urandom(32)).decode()
+        return binascii.hexlify(os.urandom(32)).decode()
 
     app.config['JWT_SECRET_KEY'] = generate_secret_key()
     app.config["JWT_TOKEN_LOCATION"] = ["headers"]
