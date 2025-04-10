@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from database.db_factory import get_vector_db
-from protected import get_user_id, validate_request, get_user_id_from_request
-from classes.discussion import Discussion, auth_add_like, auth_remove_like
+from app.protected import auth_add_like, auth_remove_like
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from classes.discussion import Discussion
 from classes.like import Like
 
 discussion_bp = Blueprint('discussion', __name__)
@@ -30,9 +31,10 @@ discussion_bp = Blueprint('discussion', __name__)
 """
 
 @discussion_bp.route('/post', methods=['POST'])
+@jwt_required()
 def post_discussion():
     # validate first
-    user_id = get_user_id_from_request(request)
+    user_id = j
     if user_id is None:
         return jsonify({"error": "Invalid token"}), 401
 
@@ -74,9 +76,10 @@ def post_discussion():
         database.close()
 
 @discussion_bp.route('/remove', methods=['POST'])
+@jwt_required()
 def remove_discussion():
     # validate first
-    user_id = get_user_id_from_request(request)
+    user_id = get_jwt_identity()
     if user_id is None:
         return jsonify({"error": "Invalid token"}), 401
     
@@ -109,9 +112,10 @@ def remove_discussion():
         database.close()
 
 @discussion_bp.route('/edit', methods=['POST'])
+@jwt_required()
 def edit_discussion():
     # validate first
-    user_id = get_user_id_from_request(request)
+    user_id = get_jwt_identity()
     if user_id is None:
         return jsonify({"error": "Invalid token"}), 401
 
@@ -152,9 +156,10 @@ def get_discussion_by_id(discussion_id):
     return discussion
 
 @discussion_bp.route('/like', methods=['POST'])
+@jwt_required()
 def like_reply():
     # validate first
-    user_id = get_user_id_from_request(request)
+    user_id = get_jwt_identity()
     if user_id is None:
         return jsonify({"error": "Invalid token"}), 401
     
@@ -165,9 +170,10 @@ def like_reply():
     return auth_add_like(user_id, discussion_id, 'discussion', get_discussion_by_id)
 
 @discussion_bp.route('/unlike', methods=['POST'])
+@jwt_required()
 def unlike_reply():
     # validate first
-    user_id = get_user_id_from_request(request)
+    user_id = get_jwt_identity()
     if user_id is None:
         return jsonify({"error": "Invalid token"}), 401
 

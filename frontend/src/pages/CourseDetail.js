@@ -419,7 +419,14 @@ const CourseDetail = () => {
                   </div>
                 )}
                 
-                <CourseReviews courseId={courseId} />
+                <CourseReviews 
+                  courseId={courseId}
+                  reviews={reviews}
+                  stats={stats}
+                  loading={reviewsLoading} 
+                  error={error}
+                  refreshReviews={refreshReviews}
+                />
               </div>
             )}
             

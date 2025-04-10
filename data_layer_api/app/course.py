@@ -1,13 +1,13 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from database.db_factory import get_vector_db
 from classes.course import Course, CourseReview
 from classes.discussion import Discussion
 from classes.reply import Reply
 from classes.like import Like
 from embedder.embedder import get_embedding, embed_course_vector, embed_discussion_vector, embed_reply_vector
-from flask_jwt_extended import decode_token
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from uuid import UUID
-from protected import auth_add_like, auth_remove_like, get_user_id_from_request
+from app.protected import auth_add_like, auth_remove_like
 course_bp = Blueprint('course', __name__)
 
 @course_bp.route('/', methods=['GET'])
@@ -107,9 +107,10 @@ def get_course_reviews(course_id):
         return jsonify({"error": str(e)}), 500
 
 @course_bp.route('/<course_id>/review', methods=['POST'])
+@jwt_required()
 def review_course(course_id):
     # validate first
-    user_id = get_user_id_from_request(request)
+    user_id = get_jwt_identity()
     if user_id is None:
         return jsonify({"error": "Invalid token"}), 401
     
@@ -121,6 +122,9 @@ def review_course(course_id):
     if not user_id or not rating:
         return jsonify({"error": "Missing required fields: user_id and rating are required"}), 400
     
+    user_ip = request.remote_addr
+    user_agent = request.headers.get('User-Agent', 'unknown')
+
     database = get_vector_db()
     
     try:
@@ -210,25 +214,6 @@ def query_course():
     database.close()
     
     return jsonify({"courses": courses})
-
-@course_bp.route('/review', methods=['POST'])
-def review_course():
-    user_id = get_user_id_from_request(request)
-    if user_id is None:
-        return jsonify({"error": "Invalid token"}), 401
-    
-    payload = request.get_json()
-
-    course_id = payload.get("course_id")
-    rating = payload.get("rating")
-    description = payload.get("description", None)
-    review = CourseReview(user_id, course_id, rating, description)
-    
-    database = get_vector_db()
-    database.insert_course_review(review)
-    database.close()
-
-    return jsonify({"message": "Course Review Inserted"})
 
 @course_bp.route('/clear', methods=['POST'])
 def clear_courses():
@@ -594,6 +579,7 @@ def reply_to_reply(course_id, discussion_id, reply_id):
         return jsonify({"error": str(e)}), 500
     
 @course_bp.route('/<course_id>/discussion/<discussion_id>/reply/<reply_id>', methods=['DELETE'])
+@jwt_required()
 def delete_reply(course_id, discussion_id, reply_id):
     """
     Delete a reply by setting its text to '[deleted]'.
@@ -619,7 +605,7 @@ def delete_reply(course_id, discussion_id, reply_id):
             return jsonify({"error": "Invalid reply ID format"}), 400
         
         # validate first
-        user_id = get_user_id_from_request(request)
+        user_id = get_jwt_identity()
         if user_id is None:
             return jsonify({"error": "Invalid token"}), 401
         
@@ -657,9 +643,10 @@ def get_reply_by_id(reply_id):
     return reply
 
 @course_bp.route('/like_reply', methods=['POST'])
+@jwt_required()
 def like_reply():
     # validate first
-    user_id = get_user_id_from_request(request)
+    user_id = get_jwt_identity()
     if user_id is None:
         return jsonify({"error": "Invalid token"}), 401
     
@@ -670,9 +657,10 @@ def like_reply():
     return auth_add_like(user_id, reply_id, 'reply', get_reply_by_id)
 
 @course_bp.route('/unlike_reply', methods=['POST'])
+@jwt_required()
 def unlike_reply():
     # validate first
-    user_id = get_user_id_from_request(request)
+    user_id = get_jwt_identity()
     if user_id is None:
         return jsonify({"error": "Invalid token"}), 401
     
@@ -689,12 +677,18 @@ def get_course_by_id(course_id):
         return course
 
 @course_bp.route('/like', methods=['POST'])
+@jwt_required()
 def like_course():
     # validate first
-    user_id = get_user_id_from_request(request)
+    jwt_data = get_jwt()
+    current_app.logger.info(f"Full JWT data: {jwt_data}")
+
+    user_id = get_jwt_identity()
+    current_app.logger.info(f"Retrieved user_id from token: {user_id}")
     if user_id is None:
         return jsonify({"error": "Invalid token"}), 401
     
+
     payload = request.get_json()
     
     course_id = payload["course_id"]
@@ -702,9 +696,10 @@ def like_course():
     return auth_add_like(user_id, course_id, 'course', get_course_by_id)
 
 @course_bp.route('/unlike', methods=['POST'])
+@jwt_required()
 def unlike_course():
     # validate first
-    user_id = get_user_id_from_request(request)
+    user_id = get_jwt_identity()
     if user_id is None:
         return jsonify({"error": "Invalid token"}), 401
     

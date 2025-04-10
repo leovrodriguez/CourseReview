@@ -1,10 +1,8 @@
 // src/components/courses/CourseReviews.js
 import React, { useState } from 'react';
 import { API_BASE_URL } from '../../api/config';
-import { useReviews } from '../../hooks/useReviews';
 
-const CourseReviews = ({ courseId }) => {
-  const { reviews, loading, error, stats, refreshReviews } = useReviews(courseId);
+const CourseReviews = ({ courseId, reviews, loading, error, stats, refreshReviews }) => {
   const [deleteError, setDeleteError] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);

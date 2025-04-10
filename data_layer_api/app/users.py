@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from classes.user import User
 from flask_cors import cross_origin
 from database.db_factory import get_vector_db
@@ -6,11 +6,9 @@ import uuid
 import secrets
 import base64
 import hashlib
-from flask_jwt_extended import create_access_token, get_jwt_identity, decode_token
+from flask_jwt_extended import create_access_token, decode_token
 from datetime import timedelta
 import re
-from protected import validate_token, get_user_id
-
 
 users_bp = Blueprint('users', __name__)
 
@@ -208,12 +206,10 @@ def insert_user():
         decoded_token = decode_token(access_token)
         
         # If decoding was successful, the token is valid and has not expired
-        print('valid token')
+        print(f"Token decodes to:{decode_token}")
     except Exception as e:
         # If decoding fails (e.g., expired or tampered token), handle it here
         print('invalid token')
-
-    print(user_id, get_user_id(access_token))
 
     # Implement search logic here
     return jsonify({"message": "User Inserted Successfully",
@@ -246,6 +242,14 @@ def login():
     
     # Create the login token
     access_token = create_access_token(identity=str(user["id"]), expires_delta=timedelta(hours=1))
+
+    # For debugging only
+    decoded_token = decode_token(access_token)
+    current_app.logger.info(f"Decode token: {decoded_token}")
+    
+    # Just log the sub value directly from the decoded token
+    user_id_from_token = decoded_token.get('sub')  # 'sub' is where Flask-JWT-Extended stores the identity
+    current_app.logger.info(f"User ID from token 'sub' field: {user_id_from_token}")
     
     # Return successful login with user_id for client-side storage
     return jsonify({
