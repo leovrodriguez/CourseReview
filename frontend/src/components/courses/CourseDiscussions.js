@@ -1,3 +1,4 @@
+//frontend/src/components/courses/CourseDiscussions.js
 import React, { useState, useEffect } from 'react';
 import CourseSelector from './CourseSelector';
 import { API_BASE_URL } from '../../api/config';
@@ -512,6 +513,7 @@ const CourseDiscussions = ({ courseId }) => {
   const handleBackToDiscussions = () => {
     setSelectedDiscussion(null);
     setReplies([]);
+    refreshDiscussions();
   };
 
   const handleTabChange = (tab) => {
