@@ -617,7 +617,7 @@ def delete_reply(course_id, discussion_id, reply_id):
         if reply is None:
             database.close()
             return jsonify({"error": "Reply not found"}), 404
-        if reply.user_id != user_id:
+        if reply['user_id'] != user_id:
             database.close()
             return jsonify({"error": "You are not the owner of this reply"}), 403
         

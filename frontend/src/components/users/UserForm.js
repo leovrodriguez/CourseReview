@@ -31,8 +31,14 @@ const UserForm = ({ onSubmit }) => {
         throw new Error("Error checking username");
       }
       const data = await response.json();
-      // set the error to be displayed
-      setUsernameError(data.message);
+      
+      // Only set error message if username is not available
+      if (!data.isAvailable) {
+        setUsernameError(data.message);
+      } else {
+        setUsernameError(''); // Clear error if username is available
+      }
+      
       return data.isAvailable;
     } catch (error) {
       console.error("Error checking username:", error);
@@ -60,7 +66,14 @@ const UserForm = ({ onSubmit }) => {
         throw new Error("Error checking email");
       }
       const data = await response.json();
-      setEmailError(data.message);
+      
+      // Only set error message if email is not available
+      if (!data.isAvailable) {
+        setEmailError(data.message);
+      } else {
+        setEmailError(''); // Clear error if email is available
+      }
+      
       return data.isAvailable;
       
     } catch (error) {
@@ -90,7 +103,7 @@ const UserForm = ({ onSubmit }) => {
       return false;
     }
 
-    setPasswordError("");
+    setPasswordError(""); // Clear error if password is valid
     return true;
   };
 
@@ -99,7 +112,7 @@ const UserForm = ({ onSubmit }) => {
       setConfirmPasswordError("Passwords do not match");
       return false;
     }
-    setConfirmPasswordError("");
+    setConfirmPasswordError(""); // Clear error if passwords match
     return true;
   };
  
