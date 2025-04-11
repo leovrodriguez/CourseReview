@@ -7,6 +7,8 @@ import secrets
 import base64
 import hashlib
 from flask_jwt_extended import create_access_token, decode_token
+from opentelemetry import trace
+from opentelemetry.metrics import get_meter_provider
 from datetime import timedelta
 import re
 
@@ -251,6 +253,19 @@ def login():
     user_id_from_token = decoded_token.get('sub')  # 'sub' is where Flask-JWT-Extended stores the identity
     current_app.logger.info(f"User ID from token 'sub' field: {user_id_from_token}")
     
+    meter = get_meter_provider().get_meter("course-api")
+    login_counter = meter.create_counter(
+        name="course_login",
+        unit="1",
+        description="Counts successful user logins"
+    )
+
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    trace.get_current_span().set_attribute("client.ip", ip)
+
+    # Add metric increment
+    login_counter.add(1, {"username": username, "ip":ip})
+
     # Return successful login with user_id for client-side storage
     return jsonify({
         "successful": True, 
