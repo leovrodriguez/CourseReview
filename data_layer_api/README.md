@@ -5,6 +5,14 @@ The data layer handles the storage and retrieval of data. It is responsible for 
 1. Listening at endpoints in order to perform all relevant database operations
 2. Embedding any data that should be vectorized
 
+## Telemetry
+
+Metrics and Traces can be found out grafana ui located at localhost:3000 
+
+In general we meter and trace all http requests. We also track user_ids when available on request (which is most critical when users post data). This is used to track API usage and recognize any possible bad actors.
+- Metrics are avaliable via prometheus data source in grafana.
+- Traces are available via tempo data source in grafana.
+
 ## Database Operations
 
 #### Query Courses

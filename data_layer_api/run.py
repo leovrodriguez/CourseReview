@@ -4,9 +4,6 @@ from flask_cors import CORS
 
 app = create_app()
 
-# Allow all origins - ONLY USE THIS IN DEVELOPMENT
-CORS(app, supports_credentials=True)
-
 #Configuration
 app.logger.setLevel(logging.INFO)
 app.config['JSON_SORT_KEYS'] = False
