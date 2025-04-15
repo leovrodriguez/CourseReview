@@ -1282,14 +1282,16 @@ class PostgresVectorDB(VectorDB):
         return count
 
 # Vector Search Queries
-    def query_course_vector(self, query_vector: List[float], limit: int = 10, threshold: float = 0.5, similarity_weight: float = .7):
+    def query_course_vector(self, query_vector: List[float], limit: int = 10, threshold: float = 0.5, similarity_weight: float = .85):
         """
         Search for courses similar to the given query vector.
+        Normalizes ratings separately for courses with internal reviews vs external reviews.
         
         Args:
             query_vector (List[float]): The query embedding vector
             limit (int): Maximum number of results to return
             threshold (float): Minimum similarity threshold (0-1)
+            similarity_weight (float): Weight given to vector similarity vs. rating (0-1)
             
         Returns:
             List[Dict]: List of courses with similarity scores
@@ -1313,38 +1315,58 @@ class PostgresVectorDB(VectorDB):
                         c.rating AS original_website_rating,
                         c.num_ratings AS original_website_num_ratings,
                         1 - (c.embedding <=> %s) as similarity,
-                        COALESCE(rr.avg_rating, c.rating) AS merged_rating,
-                        COALESCE(rr.num_reviews, c.num_ratings) AS merged_num_ratings
+                        CASE WHEN rr.avg_rating IS NOT NULL THEN 1 ELSE 0 END AS has_internal_reviews
                     FROM courses c
                     LEFT JOIN review_ratings rr ON c.id = rr.course_id
                     WHERE 1 - (c.embedding <=> %s) > %s
                     ORDER BY similarity DESC
                     LIMIT %s
                 ),
-                normalized_courses AS (
+                normalized_internal_reviews AS (
+                    -- Normalize courses that have internal reviews against each other
                     SELECT 
                         *,
-                        merged_rating / 5 AS norm_rating,
-                        -- Normalize the log of review counts
-                        LOG(1 + merged_num_ratings) / LOG(1 + MAX(merged_num_ratings) OVER ()) AS norm_reviews,
-                        -- Calculate normalized effective rating (0-1 range)
-                        (merged_rating / 5) * (LOG(1 + merged_num_ratings) / LOG(1 + MAX(merged_num_ratings) OVER ())) AS normalized_effective_rating
+                        course_review_rating / 5 AS norm_rating,
+                        LOG(1 + course_review_rating_num) / NULLIF(LOG(1 + MAX(course_review_rating_num) OVER ()), 0) AS norm_reviews,
+                        (course_review_rating / 5) * (LOG(1 + course_review_rating_num) / NULLIF(LOG(1 + MAX(course_review_rating_num) OVER ()), 0)) AS normalized_effective_rating
                     FROM similar_courses
+                    WHERE has_internal_reviews = 1
+                ),
+                normalized_external_reviews AS (
+                    -- Normalize courses that only have external reviews against each other
+                    SELECT 
+                        *,
+                        original_website_rating / 5 AS norm_rating,
+                        LOG(1 + original_website_num_ratings) / NULLIF(LOG(1 + MAX(original_website_num_ratings) OVER ()), 0) AS norm_reviews,
+                        (original_website_rating / 5) * (LOG(1 + original_website_num_ratings) / NULLIF(LOG(1 + MAX(original_website_num_ratings) OVER ()), 0)) AS normalized_effective_rating
+                    FROM similar_courses
+                    WHERE has_internal_reviews = 0
+                ),
+                combined_results AS (
+                    SELECT * FROM normalized_internal_reviews
+                    UNION ALL
+                    SELECT * FROM normalized_external_reviews
                 )
                 SELECT 
                     id, title, description, platform, authors, skills, image_url, is_free, url,
                     course_review_rating, course_review_rating_num,
                     original_website_rating, original_website_num_ratings, 
-                    merged_rating AS rating_used_for_query, merged_num_ratings AS num_ratings_used_for_query,
-                    -- Ordering related fields at the end
+                    CASE 
+                        WHEN has_internal_reviews = 1 THEN course_review_rating 
+                        ELSE original_website_rating 
+                    END AS rating_used_for_query, 
+                    CASE 
+                        WHEN has_internal_reviews = 1 THEN course_review_rating_num 
+                        ELSE original_website_num_ratings 
+                    END AS num_ratings_used_for_query,
+                    -- Ordering related fields
                     similarity, norm_rating, norm_reviews, normalized_effective_rating,
-                    %s * similarity + (1-%s) * normalized_effective_rating AS custom_ranking
-                FROM normalized_courses
+                    %s * similarity + (1-%s) * normalized_effective_rating AS custom_ranking,
+                    has_internal_reviews
+                FROM combined_results
                 ORDER BY custom_ranking DESC
                 LIMIT %s
             """, [vector_str, vector_str, threshold, limit * 2, similarity_weight, similarity_weight, limit])
-
-
             
             columns = [desc[0] for desc in cursor.description]
             results = []
@@ -1353,7 +1375,7 @@ class PostgresVectorDB(VectorDB):
                 # Convert row to dictionary
                 course_dict = dict(zip(columns, row))
                 results.append(course_dict)
-                
+                    
         return results
 
     def query_discussion_vectors(self, query_vector: List[float], limit: int = 10, threshold: float = 0.5):
