@@ -633,76 +633,99 @@ const CourseDiscussions = ({ courseId }) => {
 
   const handleSubmitDiscussion = async (e) => {
     e.preventDefault();
-
+  
     // Check if user is logged in
     const token = localStorage.getItem('token');
-    const userString = localStorage.getItem('user');
-
-    if (!token || !userString) {
+  
+    if (!token) {
       setSubmitError('You must be logged in to start a discussion');
       return;
     }
-
+  
     // Validate input
     if (!title.trim()) {
       setSubmitError('Please enter a title for your discussion');
       return;
     }
-
+  
     if (!description.trim()) {
       setSubmitError('Please enter a description for your discussion');
       return;
     }
-
-    const userData = JSON.parse(userString);
-    const userId = userData.id;
-
+  
     try {
       setSubmitting(true);
       setSubmitError(null);
-
-      const response = await fetch(`${API_BASE_URL}/course/${courseId}/discussion`, {
+  
+      // Collect all course IDs to include in the payload
+      const courseIdsFromRefs = referencedCourses.map(c => c.id);
+      
+      // Make sure we always include the current course ID from the URL if we're on a course page
+      if (courseId && !courseIdsFromRefs.includes(courseId)) {
+        courseIdsFromRefs.push(courseId);
+      }
+      
+      // Use the unique set of course IDs
+      const allCourseIds = [...new Set(courseIdsFromRefs)];
+  
+      const response = await fetch(`${API_BASE_URL}/course/discussion`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          user_id: userId,
           title: title.trim(),
           description: description.trim(),
-          referenced_courses: referencedCourses.map(c => c.id)
+          course_ids: allCourseIds
         })
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to create discussion');
       }
-
+  
       // Show success message
       setSubmitSuccess(true);
-
+  
       // Clear form
       setTitle('');
       setDescription('');
       setReferencedCourses([]);
-
+  
       // Refresh discussions list
       refreshDiscussions();
-
+  
       // Close form after a delay
       setTimeout(() => {
         setShowNewDiscussionForm(false);
         setSubmitSuccess(false);
       }, 2000);
-
+  
     } catch (err) {
       console.error('Error creating discussion:', err);
       setSubmitError(err.message || 'Failed to create discussion');
     } finally {
       setSubmitting(false);
     }
+  };
+  
+  // Add a helper function to extract course IDs from description text
+  const extractCourseIdsFromDescription = (text) => {
+    if (!text) return [];
+    
+    const courseIds = [];
+    const regex = /\*\*\*\[\[course:([a-f0-9-]+)\]\]\*\*\*/g;
+    let match;
+    
+    while ((match = regex.exec(text)) !== null) {
+      if (match[1]) {
+        courseIds.push(match[1]);
+      }
+    }
+    
+    return courseIds;
   };
 
   const handleReplyChange = (e) => {

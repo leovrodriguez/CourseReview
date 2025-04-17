@@ -63,10 +63,6 @@ def discussion_to_string(discussion: Discussion) -> str:
         f"Discussion content: {discussion.description}"
     ]
     
-    # If the discussion is associated with a course, include that information
-    if discussion.course_id:
-        parts.append(f"This discussion is related to a course with ID: {discussion.course_id}")
-    
     return " ".join(parts)  
 
 def get_embedding(query: str) -> List[float]:

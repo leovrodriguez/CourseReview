@@ -11,4 +11,3 @@ class Discussion:
     title: str
     description: str
     user_id: UUID
-    course_id: UUID

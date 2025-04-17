@@ -12,7 +12,7 @@ def create_app():
 
     # Generate a random secret key for JWT
     def generate_secret_key():
-        return binascii.hexlify(os.urandom(32)).decode()
+        return "6e80df3eec92f3bdd2e10f5fac37bad3e82a5587ec62bb8c9c34fc7ac18e1429"
     
     # Fallback to a default value if environment variable is not set
     if not jwt_secret_key:
