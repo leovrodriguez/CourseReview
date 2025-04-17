@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-
 const Navbar = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -84,6 +83,7 @@ const Navbar = () => {
       
       <ul className="navbar-links">
         <li><a href="/">Home</a></li>
+        <li><a href="/discussions">Discussions</a></li>
       </ul>
       
       <div className="navbar-auth">

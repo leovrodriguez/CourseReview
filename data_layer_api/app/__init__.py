@@ -64,7 +64,7 @@ def create_app():
     jwt_secret_key = os.environ.get('JWT_SECRET_KEY')
 
     def generate_secret_key():
-        return binascii.hexlify(os.urandom(32)).decode()
+        return "6e80df3eec92f3bdd2e10f5fac37bad3e82a5587ec62bb8c9c34fc7ac18e1429"
 
     if not jwt_secret_key:
         print("WARNING: JWT_SECRET_KEY not found in environment variables. Using default key (not recommended for production).")
