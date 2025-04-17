@@ -251,6 +251,7 @@ def login():
     user_id_from_token = decoded_token.get('sub')  # 'sub' is where Flask-JWT-Extended stores the identity
     current_app.logger.info(f"User ID from token 'sub' field: {user_id_from_token}")
     
+
     # Return successful login with user_id for client-side storage
     return jsonify({
         "successful": True, 

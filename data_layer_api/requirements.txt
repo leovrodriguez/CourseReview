@@ -7,3 +7,8 @@ requests
 types-requests
 flask-cors==5.0.1
 flask_jwt_extended
+opentelemetry-distro 
+opentelemetry-instrumentation-flask
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-exporter-otlp

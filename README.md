@@ -5,16 +5,27 @@
 
  ```mermaid
 flowchart TD
-    A@{ shape: cyl, label: "Database" }
-    B(Front End)
-    C(Data Layer API )
-    D(Course Data ETL)
-    E(Ollama Embedder)
+    A@{ shape: cyl, label: "Postgres DB" }
+    B(React Front End)
+    C(Flask Data Layer API )
+    D(Python Course Data ETL)
+    E(Ollama Model Executor)
+    subgraph otel-lgtm
+        F1(OpenTelemetry)
+        F2@{shape: cyl, label: Prometheus DB}
+        F3@{shape: cyl, label: Tempo DB}
+        F5(Grafana UI)
+    end
 
     B <-- retrieve and post user data -----> C
-    D -.manual job runs to store platform course data....-> C
-    C <---> A
-    C ---> E
+    D -.routine data aggregation and processing....-> C
+    C <---> |query| A
+    C ---> |query nomic embedder|E
+    C --> | telemetry data | F1
+    F1 -->|export logs & metrics| F2
+    F1 -->|export traces| F3
+    F5 -->|query| F2
+    F5 -->|query| F3
 ```
 
 See ReadMe files in each service for more information on how to run and develop each service.

@@ -10,6 +10,7 @@ services:
       - AVOID_PARSE_COURSERA=${AVOID_PARSE_COURSERA:-false}
       - AVOID_PARSE_UDEMY=${AVOID_PARSE_UDEMY:-false}
       - FORCE_INSERT=${FORCE_INSERT:-false}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
     depends_on:
       - data_layer_api
 
@@ -21,7 +22,7 @@ services:
     command: serve
     expose:
       - 11434
-  
+
   postgres:
     image: pgvector/pgvector:pg17
     container_name: postgres
@@ -32,7 +33,7 @@ services:
       - POSTGRES_DB=course_data_etl
     ports:
       - "5432:5432"
-    volumes: 
+    volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -50,7 +51,7 @@ services:
     ports:
       - "5050:80"
     volumes:
-    - pgadmin_data:/var/lib/pgadmin
+      - pgadmin_data:/var/lib/pgadmin
     depends_on:
       - postgres
 
@@ -69,6 +70,9 @@ services:
       - DB_PASSWORD=postgres
       - DB_NAME=course_data_etl
       - FLASK_ENV=development
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+      - OTEL_SERVICE_NAME=data_layer
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
     ports:
       - "5003:5000"
     develop:
@@ -90,9 +94,23 @@ services:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - "3000:3000"
+      - "3001:3001"
     depends_on:
       - data_layer_api
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-lgtm:4318
+
+  otel-lgtm: # Open Telemetry
+    image: grafana/otel-lgtm
+    container_name: otel-lgtm
+    ports:
+      - "3000:3000"   # Grafana UI
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+    volumes:
+      - otel_data:/data
+    environment:
+      - ENABLE_LOGS_ALL=true
 
 volumes:
   raw_course_data:
@@ -100,3 +118,4 @@ volumes:
   postgres_data:
   sql_lite_db:
   pgadmin_data:
+  otel_data:
