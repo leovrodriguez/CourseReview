@@ -91,7 +91,7 @@ export const useCourses = (initialQuery = '', initialSort = {}) => {
       }
 
       // Is Free filter
-      if (filters.isFree == "true" && !course.is_free) {
+      if ((filters.isFree == "true" && !course.is_free) || (filters.isFree == "false" && course.is_free)) {
         return false;
       }
 
